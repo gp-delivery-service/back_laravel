@@ -1,0 +1,59 @@
+<?php
+
+namespace App\Repositories\Admin;
+
+use App\Models\GpOperator;
+use Illuminate\Support\Facades\DB;
+
+class OperatorRepository
+{
+    // Получение с пагинацией
+    public function getItemsWithPagination($userUuid, $perPage = 20)
+    {
+        $paginator = GpOperator::select('gp_operators.id as id')
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage);
+        $items_ids = $paginator->pluck('id')->toArray();
+        $items = $this->getItems($items_ids);
+        $ordered_items = $items->sortBy(function ($item) use ($items_ids) {
+            return array_search($item->id, $items_ids);
+        })->values();
+        $paginator->setCollection($ordered_items);
+        return $paginator;
+    }
+
+    // Создание
+    public function create(array $data)
+    {
+        $data['password'] = bcrypt($data['password']);
+        $created = GpOperator::create($data);
+        return $created;
+    }
+
+    // Обновление
+    public function update($id, array $data)
+    {
+        if (isset($data['password']) && !empty($data['password'])) {
+            $data['password'] = bcrypt($data['password']);
+        }else{
+            unset($data['password']);
+        }
+        $operator = GpOperator::find($id);
+        $updated = $operator->update($data);
+        return $updated;
+    }
+
+    private function getItems(array $ids = [])
+    {
+        $query = GpOperator::query();
+        $query->whereIn('gp_operators.id', $ids);
+        $query->select(
+            'gp_operators.id as id',
+            'gp_operators.name as name',
+            'gp_operators.email as email',
+            'gp_operators.created_at as created_at'
+        );
+        $items = $query->get();
+        return $items;
+    }
+}
