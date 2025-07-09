@@ -55,6 +55,7 @@ class Kernel extends HttpKernel
     protected $middlewareAliases = [
         'role' => \App\Http\Middleware\RoleMiddleware::class,
         'multi_role' => \App\Http\Middleware\MultiRoleMiddleware::class,
+        'xnode.verify' => \App\Http\Middleware\XNodeVerifyMiddleware::class,
         'auth' => \App\Http\Middleware\Authenticate::class,
         'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
         'auth.session' => \Illuminate\Session\Middleware\AuthenticateSession::class,

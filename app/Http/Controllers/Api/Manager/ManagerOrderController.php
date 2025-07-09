@@ -42,6 +42,24 @@ class ManagerOrderController extends Controller
         ]);
     }
 
+    public function allOpen()
+    {
+        $user = Auth::user();
+        $guard = Auth::getDefaultDriver();
+        $role = $this->guardToRole[$guard] ?? 'unknown';
+
+        if ($role === 'manager' && !$user->company_id) {
+            return response()->json([
+                'mesage' => "Компания не указана"
+            ], 403);
+        }
+
+
+        $items = $this->itemRepository->getOpenOrders($user->company_id);
+
+        return response()->json($items);
+    }
+
 
     public function create(Request $request)
     {

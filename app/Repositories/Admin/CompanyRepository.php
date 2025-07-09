@@ -51,6 +51,10 @@ class CompanyRepository
         $query->select(
             'gp_companies.id as id',
             'gp_companies.name as name',
+            'gp_companies.address as address',
+            'gp_companies.lat as lat',
+            'gp_companies.lng as lng',
+            'gp_companies.image as image',
             'gp_companies.created_at as created_at',
             'gp_companies.updated_at as updated_at',
         );

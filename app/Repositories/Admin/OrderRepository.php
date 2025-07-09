@@ -25,21 +25,40 @@ class OrderRepository
         return $paginator;
     }
 
-     // Создание
-     public function create(array $data)
-     {
-         $created = GpOrder::create($data);
-         return $created;
-     }
- 
-     // Обновление
-     public function update($id, array $data)
-     {
-         $item = GpOrder::find($id);
-         $updated = $item->update($data);
-         return $updated;
-     }
- 
+    // Получение всех заказов без записи в gp_pickup_orders
+    public function getOpenOrders($company_id)
+    {
+        $orders = GpOrder::whereNotExists(function ($query) {
+            $query->select(DB::raw(1))
+                ->from('gp_pickup_orders')
+                ->whereRaw('gp_pickup_orders.order_id = gp_orders.id');
+        })->when($company_id !== null, function ($query) use ($company_id) {
+            $query->where('gp_orders.company_id', $company_id);
+        })
+            ->orderBy('created_at', 'desc')
+            ->pluck('id')
+            ->toArray();
+
+        $orders = $this->getItems($orders);
+
+        return $orders;
+    }
+
+    // Создание
+    public function create(array $data)
+    {
+        $created = GpOrder::create($data);
+        return $created;
+    }
+
+    // Обновление
+    public function update($id, array $data)
+    {
+        $item = GpOrder::find($id);
+        $updated = $item->update($data);
+        return $updated;
+    }
+
 
     private function getItems(array $ids = [])
     {

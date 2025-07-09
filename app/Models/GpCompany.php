@@ -10,7 +10,7 @@ class GpCompany extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'address', 'lat', 'lng', 'image', 'credit_balance', 'agregator_side_balance', 'balance'];
 
     public $incrementing = false;
     protected $keyType = 'string';

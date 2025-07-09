@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Driver;
 use App\Http\Controllers\Controller;
 use App\Models\GpDriver;
 use App\Models\GpDriverSms;
+use App\Services\NodeService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,6 +16,7 @@ class DriverUserController extends Controller
     public function user(Request $request)
     {
         $user = Auth::guard('api_driver')->user();
+        
         return response()->json($user);
     }
 
@@ -24,6 +26,7 @@ class DriverUserController extends Controller
 
             $test_users_phones = [
                 '62345678',
+                '62985060',
             ];
             $test_users_sms_code = 123456;
 
@@ -53,7 +56,8 @@ class DriverUserController extends Controller
             $sms->expired_at = $expiredAt;
             $sms->active = 1;
             $sms->save();
-
+            
+            NodeService::sendSmsCode($sms->sms, $user->phone);
 
             return response()->json([
                 'success' => true,

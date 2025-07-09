@@ -22,6 +22,13 @@ class OperatorRepository
         return $paginator;
     }
 
+    // Получение короткого списка операторов
+    public function getShortList(){
+        $all_ids = GpOperator::where('blocked', false)->pluck('id')->toArray();
+        $items = $this->getItems($all_ids);
+        return $items;
+    }
+
     // Создание
     public function create(array $data)
     {

@@ -31,4 +31,12 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+
+    'node' => [
+        'http_url' => env('NODE_SERVICE_HTTP_URL'),
+        'geo_url' => env('NODE_SERVICE_GEO_URL'),
+        'ws_url' => env('NODE_SERVICE_WS_URL')
+    ]
+
+
 ];

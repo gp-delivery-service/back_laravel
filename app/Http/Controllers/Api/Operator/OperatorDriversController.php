@@ -38,7 +38,9 @@ class OperatorDriversController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string',
-            'phone' => 'required|string|unique:gp_drivers,phone'
+            'phone' => 'required|string|unique:gp_drivers,phone',
+            'car_name' => 'required|string',
+            'car_number' => 'required|string'
         ]);
 
         $created = $this->itemRepository->create($validated);
@@ -55,7 +57,14 @@ class OperatorDriversController extends Controller
         $user = Auth::user();
 
         $validated = $request->validate([
-            'name' => 'required|string'
+            'name' => 'required|string',
+            'phone' => [
+                'required',
+                'string',
+                'unique:gp_drivers,phone,' . $id,
+            ],
+            'car_name' => 'required|string',
+            'car_number' => 'required|string',
         ]);
 
         $updated = $this->itemRepository->update($id, $validated);

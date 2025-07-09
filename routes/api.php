@@ -4,8 +4,13 @@ use App\Http\Controllers\Api\Admin\AdminOperatorsController;
 use App\Http\Controllers\Api\Admin\AdminUserController;
 use App\Http\Controllers\Api\App\AppController;
 use App\Http\Controllers\Api\Dashboard\CompanyController;
+use App\Http\Controllers\Api\Driver\DriverPickupController;
+use App\Http\Controllers\Api\Driver\DriverReturnCashController;
 use App\Http\Controllers\Api\Driver\DriverUserController;
+use App\Http\Controllers\Api\Driver\DriverWorkController;
+use App\Http\Controllers\Api\ImageUploadController;
 use App\Http\Controllers\Api\Manager\ManagerOrderController;
+use App\Http\Controllers\Api\Manager\ManagerPickupController;
 use App\Http\Controllers\Api\Manager\ManagerUserController;
 use App\Http\Controllers\Api\Map\MapGeoController;
 use App\Http\Controllers\Api\Multirole\UserController;
@@ -13,6 +18,7 @@ use App\Http\Controllers\Api\Operator\OperatorCompaniesController;
 use App\Http\Controllers\Api\Operator\OperatorDriversController;
 use App\Http\Controllers\Api\Operator\OperatorUserController;
 use App\Http\Controllers\Api\Operator\OperatorCompanyManagersController;
+use App\Http\Controllers\Api\Operator\OperatorReturnCashController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -61,12 +67,26 @@ Route::middleware(['multi_role:operator,admin'])->put('/operator/companies/{id}'
 Route::middleware(['multi_role:operator,admin'])->get('/operator/company/{company_id}/managers', [OperatorCompanyManagersController::class, 'index']);
 Route::middleware(['multi_role:operator,admin'])->post('/operator/company/{company_id}/managers', [OperatorCompanyManagersController::class, 'create']);
 Route::middleware(['multi_role:operator,admin'])->put('/operator/company/{company_id}/managers/{id}', [OperatorCompanyManagersController::class, 'update']);
+// - RETURN CASH
+Route::middleware(['auth:api_operator', 'role:operator'])->get('/operator/return-cash/{id}', [OperatorReturnCashController::class, 'getReturnCashCode']);
+
 
 // DRIVER
 // - AUTH
 Route::post('/driver/auth/sms', [DriverUserController::class, 'sendCode']);
 Route::post('/driver/auth/login', [DriverUserController::class, 'login']);
 Route::middleware(['auth:api_driver', 'role:driver'])->get('/driver/auth/user', [DriverUserController::class, 'user']);
+// - PICKUPS
+Route::post('/driver/pickups/take', [DriverPickupController::class, 'takePickup']);
+// - WORK
+Route::middleware(['auth:api_driver', 'role:driver'])->get('/driver/work/open', [DriverWorkController::class, 'availableFlow']);
+Route::middleware(['auth:api_driver', 'role:driver'])->get('/driver/work/workflow', [DriverWorkController::class, 'workflow']);
+Route::middleware(['auth:api_driver', 'role:driver'])->get('/driver/work/pickup/{pickupId}', [DriverWorkController::class, 'pickup']);
+// - RETURN CASH
+Route::middleware(['auth:api_driver', 'role:driver'])->get('/driver/return-cash/operators', [DriverReturnCashController::class, 'getOperatorsList']);
+Route::middleware(['auth:api_driver', 'role:driver'])->post('/driver/return-cash/amount', [DriverReturnCashController::class, 'getReturnCashAmountWithCode']);
+Route::middleware(['auth:api_driver', 'role:driver'])->post('/driver/return-cash/confirm', [DriverReturnCashController::class, 'confirmReturnCash']);
+
 
 // MANAGER
 // - AUTH
@@ -76,12 +96,23 @@ Route::middleware(['auth:api_manager', 'role:manager'])->get('/manager/auth/user
 Route::middleware(['auth:api_manager', 'role:manager'])->post('/manager/auth/logout', [ManagerUserController::class, 'logout']);
 // - ORDERS
 Route::middleware(['multi_role:operator,admin,manager'])->get('/manager/orders', [ManagerOrderController::class, 'index']);
+Route::middleware(['multi_role:operator,admin,manager'])->get('/manager/orders-open', [ManagerOrderController::class, 'allOpen']);
 Route::middleware(['multi_role:operator,admin,manager'])->post('/manager/orders', [ManagerOrderController::class, 'create']);
 Route::middleware(['multi_role:operator,admin,manager'])->put('/manager/orders/{id}', [ManagerOrderController::class, 'update']);
+// - PICKUPS
+Route::middleware(['multi_role:operator,admin,manager'])->get('/manager/pickups', [ManagerPickupController::class, 'index']);
+Route::middleware(['multi_role:operator,admin,manager'])->post('/manager/pickups', [ManagerPickupController::class, 'store']);
+Route::middleware(['multi_role:operator,admin,manager'])->post('/manager/pickups-quick', [ManagerPickupController::class, 'quickStore']);
+Route::middleware(['multi_role:operator,admin,manager'])->put('/manager/pickups/{id}', [ManagerPickupController::class, 'update']);
+Route::middleware(['multi_role:operator,admin,manager'])->post('/manager/pickups/{id}/add-orders', [ManagerPickupController::class, 'addOrders']);
+Route::middleware(['multi_role:operator,admin,manager'])->post('/manager/pickups/{id}/remove-orders', [ManagerPickupController::class, 'removeOrders']);
+Route::middleware(['multi_role:operator,admin,manager'])->post('/manager/pickups/{id}/status', [ManagerPickupController::class, 'changeStatus']);
 
 
 // MULTIROLE
 Route::middleware(['multi_role:admin,operator,manager,driver'])->get('/multirole/user', [UserController::class, 'user']);
+Route::middleware(['multi_role:admin,operator,manager,driver'])->post('/multirole/store/upload', [ImageUploadController::class, 'upload']);
+Route::middleware(['multi_role:admin,operator,manager,driver'])->post('/multirole/store/delete', [ImageUploadController::class, 'delete']);
 
 // DASHBOARD
 Route::middleware(['multi_role:admin,operator,manager'])->get('/dashboard/company/{id}', [CompanyController::class, 'index']);
@@ -95,3 +126,8 @@ Route::put('/map/streets/{id}', [MapGeoController::class, 'updateStreet']);
 Route::get('/map/districts', [MapGeoController::class, 'districts']);
 Route::post('/map/districts', [MapGeoController::class, 'createDistrict']);
 Route::put('/map/districts/{id}', [MapGeoController::class, 'updateDistrict']);
+
+
+// - XNODE
+Route::middleware(['xnode.verify'])->get('/xnode/calls', [ManagerPickupController::class, 'calls']);
+

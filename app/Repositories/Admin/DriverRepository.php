@@ -45,6 +45,9 @@ class DriverRepository
             'gp_drivers.id as id',
             'gp_drivers.name as name',
             'gp_drivers.phone as phone',
+            'gp_drivers.car_name as car_name',
+            'gp_drivers.car_number as car_number',
+            'gp_drivers.image as image',
             'gp_drivers.created_at as created_at'
         );
         $items = $query->get();

@@ -45,7 +45,11 @@ class OperatorCompaniesController extends Controller
         $user = Auth::user();
 
         $validated = $request->validate([
-            'name' => 'required|string'
+            'name' => 'required|string',
+            'address' => 'nullable|string',
+            'lat' => 'nullable|string',
+            'lng' => 'nullable|string',
+            'image' => 'nullable|string',
         ]);
 
         $created = $this->itemRepository->create($validated);
@@ -62,7 +66,11 @@ class OperatorCompaniesController extends Controller
         $user = Auth::user();
 
         $validated = $request->validate([
-            'name' => 'required|string'
+            'name' => 'required|string',
+            'address' => 'nullable|string',
+            'lat' => 'nullable|string',
+            'lng' => 'nullable|string',
+            'image' => 'nullable|string',
         ]);
 
         $updated = $this->itemRepository->update($id, $validated);
