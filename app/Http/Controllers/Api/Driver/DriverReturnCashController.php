@@ -5,6 +5,10 @@ namespace App\Http\Controllers\Api\Driver;
 use App\Http\Controllers\Controller;
 use App\Models\ReturnCashVerificationCode;
 use App\Repositories\Admin\OperatorRepository;
+use App\Repositories\Balance\DriverBalanceRepository;
+use App\Repositories\Balance\DriverTransactionsRepository;
+use App\Repositories\Balance\OperatorBalanceRepository;
+use App\Repositories\Balance\OperatorTransactionsRepository;
 use App\Services\NodeService;
 use PHPUnit\Framework\Constraint\Operator;
 
@@ -22,7 +26,7 @@ class DriverReturnCashController extends Controller
         }
 
         $operatorsRepository = new OperatorRepository();
-        $operators = $operatorsRepository->getShortList();
+        $operators = $operatorsRepository->getShortListCashiers();
 
         return response()->json($operators);
     }
@@ -111,6 +115,26 @@ class DriverReturnCashController extends Controller
                 'status' => false,
             ], 404);
         }
+
+        $driverTransactionRepository = new DriverTransactionsRepository(new DriverBalanceRepository());
+        $operatorTransactionRepository = new OperatorTransactionsRepository(new OperatorBalanceRepository());
+
+        $resultDriver = $driverTransactionRepository->cash_close($user->id, $amount);
+        if ($resultDriver !== true) {
+            return response()->json([
+                'message' => 'Error processing driver cash close: ' . $resultDriver,
+                'status' => false,
+            ], 500);
+        }
+
+        $resultOperator = $operatorTransactionRepository->cash_increase($operator_id, $amount);
+        if (!$resultOperator) {
+            return response()->json([
+                'message' => 'Error processing operator cash increase: ' . $resultOperator,
+                'status' => false,
+            ], 500);
+        }
+
         NodeService::callHideVerificationCode($verification->id, $verification->operator_id);
         $verification->delete();
 

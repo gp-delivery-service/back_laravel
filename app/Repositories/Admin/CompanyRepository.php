@@ -29,6 +29,28 @@ class CompanyRepository
         return $items;
     }
 
+    // Получение одной компании
+    public function getItemById($id)
+    {
+        $item = GpCompany::find($id);
+        if (!$item) {
+            return null;
+        }
+        $item = $this->getItems([$item->id])->first();
+        
+        if (!$item) {
+            return null;
+        }
+
+        return $item;
+    }
+
+    
+    public function getItemsByIds(array $ids = [])
+    {
+        return $this->getItems($ids);
+    }
+
     // Создание
     public function create(array $data)
     {
@@ -55,6 +77,11 @@ class CompanyRepository
             'gp_companies.lat as lat',
             'gp_companies.lng as lng',
             'gp_companies.image as image',
+            'gp_companies.phone as phone',
+            'gp_companies.count as count',
+            'gp_companies.balance as balance',
+            'gp_companies.agregator_side_balance as agregator_side_balance',
+            'gp_companies.credit_balance as credit_balance',
             'gp_companies.created_at as created_at',
             'gp_companies.updated_at as updated_at',
         );

@@ -37,6 +37,24 @@ class DriverRepository
         return $updated;
     }
 
+    public function getItemById($driverId)
+    {
+        $item = GpDriver::find($driverId);
+        if (!$item) {
+            return null;
+        }
+        $item = $this->getItems([$item->id])->first();
+        if (!$item) {
+            return null;
+        }
+        return $item;
+    }
+
+    public function getItemsByIds(array $ids = [])
+    {
+        return $this->getItems($ids);
+    }
+
     private function getItems(array $ids = [])
     {
         $query = GpDriver::query();
@@ -48,6 +66,13 @@ class DriverRepository
             'gp_drivers.car_name as car_name',
             'gp_drivers.car_number as car_number',
             'gp_drivers.image as image',
+            'gp_drivers.balance as balance',
+            'gp_drivers.cash_client as cash_client',
+            'gp_drivers.cash_service as cash_service',
+            'gp_drivers.cash_goods as cash_goods',
+            'gp_drivers.cash_company_balance as cash_company_balance',
+            'gp_drivers.earning as earning',
+            'gp_drivers.earning_pending as earning_pending',
             'gp_drivers.created_at as created_at'
         );
         $items = $query->get();

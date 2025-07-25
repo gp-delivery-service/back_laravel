@@ -16,7 +16,7 @@ class DriverUserController extends Controller
     public function user(Request $request)
     {
         $user = Auth::guard('api_driver')->user();
-        
+
         return response()->json($user);
     }
 
@@ -56,7 +56,7 @@ class DriverUserController extends Controller
             $sms->expired_at = $expiredAt;
             $sms->active = 1;
             $sms->save();
-            
+
             NodeService::sendSmsCode($sms->sms, $user->phone);
 
             return response()->json([
@@ -128,12 +128,14 @@ class DriverUserController extends Controller
             GpDriverSms::where('user_id', $user->id)->delete();
 
             $profile = $user;
+            Auth::guard('api_driver')->factory()->setTTL(10080);
+            $access_token = Auth::guard('api_driver')->login($user);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Регистрация прошла успешно',
                 'data' => [
-                    'token' => Auth::guard('api_driver')->login($user),
+                    'token' => $access_token,
                     'profile' => $profile
                 ]
             ]);

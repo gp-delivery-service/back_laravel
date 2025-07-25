@@ -32,6 +32,17 @@ class OperatorDriversController extends Controller
         ]);
     }
 
+    public function getInfo($driverId)
+    {
+        $driver = $this->itemRepository->getItemById($driverId);
+
+        if (!$driver) {
+            return response()->json(['error' => 'Driver not found'], 404);
+        }
+
+        return response()->json($driver);
+    }
+
     public function create(Request $request)
     {
         $user = Auth::user();
@@ -45,7 +56,7 @@ class OperatorDriversController extends Controller
 
         $created = $this->itemRepository->create($validated);
 
-        if(!$created) {
+        if (!$created) {
             return response()->json(['error' => 'Error creating driver'], 500);
         }
 
@@ -69,7 +80,7 @@ class OperatorDriversController extends Controller
 
         $updated = $this->itemRepository->update($id, $validated);
 
-        if(!$updated) {
+        if (!$updated) {
             return response()->json(['error' => 'Error updating driver'], 500);
         }
 

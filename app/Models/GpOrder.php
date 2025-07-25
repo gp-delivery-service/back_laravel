@@ -9,7 +9,7 @@ class GpOrder extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['number', 'company_id', 'sum', 'delivery_price', 'client_phone', 'geo_comment', 'district_id', 'street_id', 'second_street_id', 'lat', 'lng'];
+    protected $fillable = ['number', 'company_id', 'sum', 'delivery_price', 'delivery_pay', 'client_phone', 'geo_comment', 'district_id', 'street_id', 'second_street_id', 'lat', 'lng'];
 
     public function company()
     {

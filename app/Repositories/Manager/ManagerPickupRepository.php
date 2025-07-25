@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Manager;
 
+use App\Constants\GpPickupOrderStatus;
 use App\Models\GpPickup;
 use App\Models\GpOrder;
 use App\Models\GpPickupOrder;
@@ -172,6 +173,7 @@ class ManagerPickupRepository
     {
         GpPickupOrder::where('pickup_id', $pickupId)
             ->whereIn('order_id', $orderIds)
+            ->whereIn('status', GpPickupOrderStatus::canBeRemovedFromPickup())
             ->delete();
 
         return GpPickup::findOrFail($pickupId)->refresh();
@@ -206,7 +208,9 @@ class ManagerPickupRepository
             'gp_pickups.company_id as company_id',
             'gp_companies.name as company_name',
             'gp_companies.image as company_image',
+            'gp_companies.phone as company_phone',
             'gp_companies.address as company_address',
+            'gp_companies.count as company_count',
             'gp_companies.lat as company_lat',
             'gp_companies.lng as company_lng',
             //
@@ -254,6 +258,7 @@ class ManagerPickupRepository
             'gp_orders.lat as lat',
             'gp_orders.lng as lng',
             'gp_orders.delivery_price as delivery_price',
+            'gp_orders.delivery_pay as delivery_pay',
             //
             'streets.id as street_id',
             'streets.name as street_name',
@@ -277,6 +282,7 @@ class ManagerPickupRepository
                     'client_phone' => $pickup_order->client_phone,
                     'sum' => $pickup_order->sum,
                     'delivery_price' => $pickup_order->delivery_price,
+                    'delivery_pay' => $pickup_order->delivery_pay,
                     'address' => $this->orderAddressString($pickup_order),
                     'geo' => $this->orderGeopointString($pickup_order),
                     'district_id' => $pickup_order->district_id,

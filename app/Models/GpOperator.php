@@ -14,7 +14,7 @@ class GpOperator extends Model implements JWTSubject, AuthenticatableInterface
 {
     use HasFactory, Authenticatable;
 
-    protected $fillable = ['name', 'email', 'password'];
+    protected $fillable = ['name', 'email', 'password', 'cashier', 'cash'];
 
     protected $hidden = ['password'];
 

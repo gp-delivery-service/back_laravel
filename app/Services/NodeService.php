@@ -21,6 +21,20 @@ class NodeService
         return self::sendRequestWithRetry($url, array());
     }
 
+    public static function callLogsRefresh(): array
+    {
+        $url = rtrim(config('services.node.http_url'), '/') . '/call/logs_refresh';
+
+        return self::sendRequestWithRetry($url, array());
+    }
+
+    public static function callUserRefresh(): array
+    {
+        $url = rtrim(config('services.node.http_url'), '/') . '/call/user_refresh';
+
+        return self::sendRequestWithRetry($url, array());
+    }
+
     public static function callShowVerificationCode(int $id, string $operator_id): array
     {
         $url = rtrim(config('services.node.http_url'), '/') . '/call/show_verification_code/' . $operator_id . '/' . $id;

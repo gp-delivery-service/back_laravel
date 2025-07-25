@@ -50,6 +50,7 @@ class OperatorCompaniesController extends Controller
             'lat' => 'nullable|string',
             'lng' => 'nullable|string',
             'image' => 'nullable|string',
+            'phone' => 'nullable|string',
         ]);
 
         $created = $this->itemRepository->create($validated);
@@ -71,6 +72,7 @@ class OperatorCompaniesController extends Controller
             'lat' => 'nullable|string',
             'lng' => 'nullable|string',
             'image' => 'nullable|string',
+            'phone' => 'nullable|string',
         ]);
 
         $updated = $this->itemRepository->update($id, $validated);

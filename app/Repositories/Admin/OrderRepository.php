@@ -2,7 +2,9 @@
 
 namespace App\Repositories\Admin;
 
+use App\Constants\GpPickupOrderStatus;
 use App\Models\GpOrder;
+use App\Models\GpPickupOrder;
 use Illuminate\Support\Facades\DB;
 
 class OrderRepository
@@ -44,6 +46,44 @@ class OrderRepository
         return $orders;
     }
 
+    // Получение заказа по ID
+    public function getItemById($id)
+    {
+        $item = $this->getItems([$id])->first();
+        return $item;
+    }
+
+    // Получение статуса заказа из pickup_orders по order_id, если есть
+    public function getOrderAvailableFields($orderId)
+    {
+        $status = GpPickupOrder::where('order_id', $orderId)
+            ->value('status');
+
+        $fields_inherited = [
+            'sum',
+            // 'delivery_price',
+            // 'delivery_pay',
+            // 'client_phone',
+            // 'geo_comment',
+            // 'district_id',
+            // 'street_id',
+            // 'second_street_id',
+            // 'lat',
+            // 'lng',
+        ];
+
+        $fields_accepted = [
+            
+        ];
+        if ($status === GpPickupOrderStatus::ACCEPTED) {
+            return $fields_accepted;
+        }
+        if ($status === GpPickupOrderStatus::INHERITED) {
+            return $fields_inherited;
+        }
+        return [];
+    }
+
     // Создание
     public function create(array $data)
     {
@@ -57,6 +97,13 @@ class OrderRepository
         $item = GpOrder::find($id);
         $updated = $item->update($data);
         return $updated;
+    }
+
+    // Проставить всем заказам по pickup_id статус GpPickupOrderStatus::ACCEPTED
+    public function setPickupOrdersAccepted($pickupId)
+    {
+        GpPickupOrder::where('pickup_id', $pickupId)->update(['status' => GpPickupOrderStatus::ACCEPTED]);
+        return true;
     }
 
 
@@ -78,6 +125,7 @@ class OrderRepository
             'gp_orders.client_phone as client_phone',
             'gp_orders.sum as sum',
             'gp_orders.delivery_price as delivery_price',
+            'gp_orders.delivery_pay as delivery_pay',
             //
             'gp_map_districts.id as district_id',
             'gp_map_districts.name as district_name',

@@ -17,6 +17,6 @@ class GpSettings extends Model
     {
         return (int) self::query()
             ->where('key', 'driver_fee')
-            ->value('int_value') ?? 0;
+            ->value('int_value') ?? 25;
     }
 }

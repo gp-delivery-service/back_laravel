@@ -22,9 +22,34 @@ class OperatorRepository
         return $paginator;
     }
 
+    // Получение одного оператора по ид
+    public function getItemById($id)
+    {
+        $item = GpOperator::find($id);
+        if (!$item) {
+            return null;
+        }
+        $item = $this->getItems([$item->id])->first();
+
+        if (!$item) {
+            return null;
+        }
+
+        return $item;
+    }
+
     // Получение короткого списка операторов
-    public function getShortList(){
+    public function getShortList()
+    {
         $all_ids = GpOperator::where('blocked', false)->pluck('id')->toArray();
+        $items = $this->getItems($all_ids);
+        return $items;
+    }
+
+    // Получение короткого списка кассиров
+    public function getShortListCashiers()
+    {
+        $all_ids = GpOperator::where('blocked', false)->where('cashier', true)->pluck('id')->toArray();
         $items = $this->getItems($all_ids);
         return $items;
     }
@@ -42,12 +67,17 @@ class OperatorRepository
     {
         if (isset($data['password']) && !empty($data['password'])) {
             $data['password'] = bcrypt($data['password']);
-        }else{
+        } else {
             unset($data['password']);
         }
         $operator = GpOperator::find($id);
         $updated = $operator->update($data);
         return $updated;
+    }
+
+    public function getItemsByIds(array $ids = [])
+    {
+        return $this->getItems($ids);
     }
 
     private function getItems(array $ids = [])
@@ -58,6 +88,8 @@ class OperatorRepository
             'gp_operators.id as id',
             'gp_operators.name as name',
             'gp_operators.email as email',
+            'gp_operators.cashier as cashier',
+            'gp_operators.cash as cash',
             'gp_operators.created_at as created_at'
         );
         $items = $query->get();
