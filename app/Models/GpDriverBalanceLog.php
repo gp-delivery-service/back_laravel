@@ -16,5 +16,17 @@ class GpDriverBalanceLog extends Model
         'new_amount',
         'tag',
         'column',
+        'user_id',
+        'user_type',
     ];
+
+    public function user()
+    {
+        return $this->morphTo();
+    }
+
+    public function driver()
+    {
+        return $this->belongsTo(GpDriver::class);
+    }
 }

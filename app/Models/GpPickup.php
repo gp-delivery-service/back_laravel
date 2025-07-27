@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Constants\GpPickupStatus;
+use App\Helpers\LogHelper;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +24,6 @@ class GpPickup extends Model
         'search_started_at'
     ];
 
-
     protected $casts = [
         'status' => GpPickupStatus::class,
         'search_started_at' => 'datetime',
@@ -33,6 +33,7 @@ class GpPickup extends Model
     {
         static::updating(function ($model) {
             $fieldsToLog = ['status', 'note', 'system_note'];
+            $userData = LogHelper::getUserLogData();
 
             foreach ($fieldsToLog as $field) {
                 if ($model->isDirty($field)) {
@@ -41,6 +42,8 @@ class GpPickup extends Model
                         'field'       => $field,
                         'old_value'   => $model->getOriginal($field),
                         'new_value'   => $model->$field,
+                        'user_id'     => $userData['user_id'],
+                        'user_type'   => $userData['user_type'],
                         'created_at'  => now()->timestamp,
                     ]);
                 }

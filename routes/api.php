@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Admin\AdminBalanceLogController;
+use App\Http\Controllers\Api\Admin\AdminEntityLogController;
 use App\Http\Controllers\Api\Admin\AdminOperatorsController;
 use App\Http\Controllers\Api\Admin\AdminUserController;
 use App\Http\Controllers\Api\App\AppController;
@@ -57,6 +58,8 @@ Route::middleware(['auth:api_admin', 'role:admin'])->post('/owner/operator-balan
 
 // - BALANCE LOGS
 Route::middleware(['multi_role:operator,admin'])->get('/owner/balance-logs', [AdminBalanceLogController::class, 'index']);
+// - ENTITY LOGS
+Route::middleware(['multi_role:operator,admin'])->get('/owner/entity-logs', [AdminEntityLogController::class, 'index']);
 
 // OPERATOR
 // - AUTH

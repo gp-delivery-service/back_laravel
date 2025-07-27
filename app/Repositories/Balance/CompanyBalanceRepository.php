@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Balance;
 
+use App\Helpers\LogHelper;
 use App\Models\GpCompany;
 use Illuminate\Support\Facades\DB;
 
@@ -17,7 +18,7 @@ class CompanyBalanceRepository
         $oldAmount = $company->balance;
         $tag = $tag ?: 'balance_update';
         $column = 'balance';
-
+        $userData = LogHelper::getUserLogData();
 
         DB::table('gp_companies')
             ->where('id', $companyId)
@@ -32,6 +33,8 @@ class CompanyBalanceRepository
             'new_amount' => $newAmount,
             'tag' => $tag,
             'column' => $column,
+            'user_id' => $userData['user_id'],
+            'user_type' => $userData['user_type'],
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -49,7 +52,7 @@ class CompanyBalanceRepository
         $oldAmount = $company->agregator_side_balance;
         $tag = $tag ?: 'agregator_side_balance_update';
         $column = 'agregator_side_balance';
-
+        $userData = LogHelper::getUserLogData();
 
         DB::table('gp_companies')
             ->where('id', $companyId)
@@ -64,6 +67,8 @@ class CompanyBalanceRepository
             'new_amount' => $newAmount,
             'tag' => $tag,
             'column' => $column,
+            'user_id' => $userData['user_id'],
+            'user_type' => $userData['user_type'],
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -81,7 +86,7 @@ class CompanyBalanceRepository
         $oldAmount = $company->credit_balance;
         $tag = $tag ?: 'credit_balance_update';
         $column = 'credit_balance';
-
+        $userData = LogHelper::getUserLogData();
 
         DB::table('gp_companies')
             ->where('id', $companyId)
@@ -96,6 +101,8 @@ class CompanyBalanceRepository
             'new_amount' => $newAmount,
             'tag' => $tag,
             'column' => $column,
+            'user_id' => $userData['user_id'],
+            'user_type' => $userData['user_type'],
             'created_at' => now(),
             'updated_at' => now(),
         ]);
