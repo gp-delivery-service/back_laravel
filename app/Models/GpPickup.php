@@ -19,12 +19,14 @@ class GpPickup extends Model
         'system_note',
         'preparing_time',
         'closed_time',
-        'archived'
+        'archived',
+        'search_started_at'
     ];
 
 
     protected $casts = [
         'status' => GpPickupStatus::class,
+        'search_started_at' => 'datetime',
     ];
 
     protected static function booted(): void
