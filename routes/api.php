@@ -10,6 +10,9 @@ use App\Http\Controllers\Api\Driver\DriverPickupController;
 use App\Http\Controllers\Api\Driver\DriverReturnCashController;
 use App\Http\Controllers\Api\Driver\DriverUserController;
 use App\Http\Controllers\Api\Driver\DriverWorkController;
+use App\Http\Controllers\Api\Client\ClientUserController;
+use App\Http\Controllers\Api\Client\ClientBalanceController;
+use App\Http\Controllers\Api\Client\ClientOrdersController;
 use App\Http\Controllers\Api\ImageUploadController;
 use App\Http\Controllers\Api\Manager\ManagerOrderController;
 use App\Http\Controllers\Api\Manager\ManagerPickupController;
@@ -115,6 +118,20 @@ Route::middleware(['auth:api_driver', 'role:driver'])->put('/driver/work/pickup_
 Route::middleware(['auth:api_driver', 'role:driver'])->get('/driver/return-cash/operators', [DriverReturnCashController::class, 'getOperatorsList']);
 Route::middleware(['auth:api_driver', 'role:driver'])->post('/driver/return-cash/amount', [DriverReturnCashController::class, 'getReturnCashAmountWithCode']);
 Route::middleware(['auth:api_driver', 'role:driver'])->post('/driver/return-cash/confirm', [DriverReturnCashController::class, 'confirmReturnCash']);
+
+
+// CLIENT
+// - AUTH
+Route::post('/client/auth/sms', [ClientUserController::class, 'sendCode']);
+Route::post('/client/auth/login', [ClientUserController::class, 'login']);
+Route::middleware(['auth:api_client', 'role:client'])->get('/client/auth/user', [ClientUserController::class, 'user']);
+// - BALANCE
+Route::middleware(['auth:api_client', 'role:client'])->get('/client/balance/info', [ClientBalanceController::class, 'getInfo']);
+Route::middleware(['auth:api_client', 'role:client'])->post('/client/balance/wallet-increase', [ClientBalanceController::class, 'walletIncrease']);
+Route::middleware(['auth:api_client', 'role:client'])->post('/client/balance/wallet-decrease', [ClientBalanceController::class, 'walletDecrease']);
+// - ORDERS
+Route::middleware(['auth:api_client', 'role:client'])->get('/client/orders', [ClientOrdersController::class, 'index']);
+Route::middleware(['auth:api_client', 'role:client'])->get('/client/orders/{id}', [ClientOrdersController::class, 'getInfo']);
 
 
 // MANAGER
