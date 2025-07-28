@@ -15,6 +15,7 @@ class MultiRoleMiddleware
         'operator' => 'api_operator',
         'manager' => 'api_manager',
         'driver' => 'api_driver',
+        'client' => 'api_client',
     ];
 
     /**

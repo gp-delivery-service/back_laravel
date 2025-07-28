@@ -16,6 +16,8 @@ use App\Http\Controllers\Api\Manager\ManagerPickupController;
 use App\Http\Controllers\Api\Manager\ManagerUserController;
 use App\Http\Controllers\Api\Map\MapGeoController;
 use App\Http\Controllers\Api\Multirole\UserController;
+use App\Http\Controllers\Api\Client\ClientUserController;
+use App\Http\Controllers\Api\Client\ClientBalanceController;
 use App\Http\Controllers\Api\Operator\OperatorCompaniesController;
 use App\Http\Controllers\Api\Operator\OperatorCompanyBalanceController;
 use App\Http\Controllers\Api\Operator\OperatorDriversController;
@@ -116,6 +118,16 @@ Route::middleware(['auth:api_driver', 'role:driver'])->get('/driver/return-cash/
 Route::middleware(['auth:api_driver', 'role:driver'])->post('/driver/return-cash/amount', [DriverReturnCashController::class, 'getReturnCashAmountWithCode']);
 Route::middleware(['auth:api_driver', 'role:driver'])->post('/driver/return-cash/confirm', [DriverReturnCashController::class, 'confirmReturnCash']);
 
+
+// CLIENT
+// - AUTH
+Route::post('/client/auth/sms', [ClientUserController::class, 'sendCode']);
+Route::post('/client/auth/login', [ClientUserController::class, 'login']);
+Route::middleware(['auth:api_client', 'role:client'])->get('/client/auth/user', [ClientUserController::class, 'user']);
+// - BALANCE
+Route::middleware(['auth:api_client', 'role:client'])->get('/client/balance/info', [ClientBalanceController::class, 'getInfo']);
+Route::middleware(['auth:api_client', 'role:client'])->post('/client/balance/wallet-increase', [ClientBalanceController::class, 'walletIncrease']);
+Route::middleware(['auth:api_client', 'role:client'])->post('/client/balance/wallet-decrease', [ClientBalanceController::class, 'walletDecrease']);
 
 // MANAGER
 // - AUTH

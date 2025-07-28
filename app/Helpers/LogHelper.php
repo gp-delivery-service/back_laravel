@@ -23,6 +23,7 @@ class LogHelper
             'api_operator' => 'App\Models\GpOperator',
             'api_driver' => 'App\Models\GpDriver',
             'api_manager' => 'App\Models\GpCompanyManager',
+            'api_client' => 'App\Models\GpClient',
         ];
 
         return [
