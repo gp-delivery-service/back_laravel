@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Balance;
 
+use App\Helpers\LogHelper;
 use App\Models\GpDriver;
 use Illuminate\Support\Facades\DB;
 
@@ -17,7 +18,7 @@ class DriverBalanceRepository
         $oldAmount = $driver->balance;
         $tag = $tag ?: 'balance_update';
         $column = 'balance';
-
+        $userData = LogHelper::getUserLogData();
 
         DB::table('gp_drivers')
             ->where('id', $driverId)
@@ -32,6 +33,8 @@ class DriverBalanceRepository
             'new_amount' => $newAmount,
             'tag' => $tag,
             'column' => $column,
+            'user_id' => $userData['user_id'],
+            'user_type' => $userData['user_type'],
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -49,7 +52,7 @@ class DriverBalanceRepository
         $oldAmount = $driver->cash_client;
         $tag = $tag ?: 'cash_client_update';
         $column = 'cash_client';
-
+        $userData = LogHelper::getUserLogData();
 
         DB::table('gp_drivers')
             ->where('id', $driverId)
@@ -64,6 +67,8 @@ class DriverBalanceRepository
             'new_amount' => $newAmount,
             'tag' => $tag,
             'column' => $column,
+            'user_id' => $userData['user_id'],
+            'user_type' => $userData['user_type'],
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -81,7 +86,7 @@ class DriverBalanceRepository
         $oldAmount = $driver->cash_service;
         $tag = $tag ?: 'cash_service_update';
         $column = 'cash_service';
-
+        $userData = LogHelper::getUserLogData();
 
         DB::table('gp_drivers')
             ->where('id', $driverId)
@@ -96,6 +101,8 @@ class DriverBalanceRepository
             'new_amount' => $newAmount,
             'tag' => $tag,
             'column' => $column,
+            'user_id' => $userData['user_id'],
+            'user_type' => $userData['user_type'],
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -113,7 +120,7 @@ class DriverBalanceRepository
         $oldAmount = $driver->cash_goods;
         $tag = $tag ?: 'cash_goods_update';
         $column = 'cash_goods';
-
+        $userData = LogHelper::getUserLogData();
 
         DB::table('gp_drivers')
             ->where('id', $driverId)
@@ -128,6 +135,8 @@ class DriverBalanceRepository
             'new_amount' => $newAmount,
             'tag' => $tag,
             'column' => $column,
+            'user_id' => $userData['user_id'],
+            'user_type' => $userData['user_type'],
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -145,7 +154,7 @@ class DriverBalanceRepository
         $oldAmount = $driver->cash_company_balance;
         $tag = $tag ?: 'cash_company_balance_update';
         $column = 'cash_company_balance';
-
+        $userData = LogHelper::getUserLogData();
 
         DB::table('gp_drivers')
             ->where('id', $driverId)
@@ -160,6 +169,8 @@ class DriverBalanceRepository
             'new_amount' => $newAmount,
             'tag' => $tag,
             'column' => $column,
+            'user_id' => $userData['user_id'],
+            'user_type' => $userData['user_type'],
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -177,7 +188,7 @@ class DriverBalanceRepository
         $oldAmount = $driver->earning;
         $tag = $tag ?: 'earning_update';
         $column = 'earning';
-
+        $userData = LogHelper::getUserLogData();
 
         DB::table('gp_drivers')
             ->where('id', $driverId)
@@ -192,6 +203,8 @@ class DriverBalanceRepository
             'new_amount' => $newAmount,
             'tag' => $tag,
             'column' => $column,
+            'user_id' => $userData['user_id'],
+            'user_type' => $userData['user_type'],
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -209,7 +222,7 @@ class DriverBalanceRepository
         $oldAmount = $driver->earning_pending;
         $tag = $tag ?: 'earning_pending_update';
         $column = 'earning_pending';
-
+        $userData = LogHelper::getUserLogData();
 
         DB::table('gp_drivers')
             ->where('id', $driverId)
@@ -224,11 +237,12 @@ class DriverBalanceRepository
             'new_amount' => $newAmount,
             'tag' => $tag,
             'column' => $column,
+            'user_id' => $userData['user_id'],
+            'user_type' => $userData['user_type'],
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
         return $driver->refresh();
     }
-    
 }

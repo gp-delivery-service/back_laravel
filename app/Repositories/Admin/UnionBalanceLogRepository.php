@@ -34,6 +34,8 @@ class UnionBalanceLogRepository
                 'new_amount',
                 'tag',
                 'column',
+                'user_id',
+                'user_type',
                 'created_at'
             );
 
@@ -50,6 +52,8 @@ class UnionBalanceLogRepository
                 'new_amount',
                 'tag',
                 'column',
+                'user_id',
+                'user_type',
                 'created_at'
             );
 
@@ -66,6 +70,8 @@ class UnionBalanceLogRepository
                 'new_amount',
                 'tag',
                 'column',
+                'user_id',
+                'user_type',
                 'created_at'
             );
 
@@ -84,6 +90,7 @@ class UnionBalanceLogRepository
         $companyIds = [];
         $driverIds = [];
         $operatorIds = [];
+        $userIds = [];
 
         foreach ($items as $item) {
             if ($item->type === 'company' && $item->company_id) {
@@ -93,6 +100,10 @@ class UnionBalanceLogRepository
             } elseif ($item->type === 'operator' && $item->operator_id) {
                 $operatorIds[] = $item->operator_id;
             }
+            
+            if ($item->user_id && $item->user_type) {
+                $userIds[] = $item->user_id;
+            }
         }
 
         // Получение связанных объектов
@@ -100,8 +111,20 @@ class UnionBalanceLogRepository
         $drivers = collect($this->driverRepository->getItemsByIds($driverIds))->keyBy('id');
         $operators = collect($this->operatorRepository->getItemsByIds($operatorIds))->keyBy('id');
 
+        // Получение пользователей
+        $users = [];
+        if (!empty($userIds)) {
+            $userTypes = ['App\Models\GpAdmin', 'App\Models\GpOperator', 'App\Models\GpDriver', 'App\Models\GpCompanyManager'];
+            foreach ($userTypes as $userType) {
+                $modelUsers = $userType::whereIn('id', $userIds)->get()->keyBy('id');
+                foreach ($modelUsers as $user) {
+                    $users[$user->id] = $user;
+                }
+            }
+        }
+
         // Привязка связанных сущностей
-        $items->transform(function ($item) use ($companies, $drivers, $operators) {
+        $items->transform(function ($item) use ($companies, $drivers, $operators, $users) {
             $item->company = $item->type === 'company'
                 ? ($companies[$item->company_id] ?? null)
                 : null;
@@ -113,6 +136,8 @@ class UnionBalanceLogRepository
             $item->operator = $item->type === 'operator'
                 ? ($operators[$item->operator_id] ?? null)
                 : null;
+
+            $item->user = isset($users[$item->user_id]) ? $users[$item->user_id] : null;
 
             return $item;
         });

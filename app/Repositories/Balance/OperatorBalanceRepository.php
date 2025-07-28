@@ -2,12 +2,12 @@
 
 namespace App\Repositories\Balance;
 
+use App\Helpers\LogHelper;
 use App\Models\GpOperator;
 use Illuminate\Support\Facades\DB;
 
 class OperatorBalanceRepository
 {
-
     public function addCash($operatorId, $amount, $tag)
     {
         $operator = GpOperator::find($operatorId);
@@ -15,10 +15,10 @@ class OperatorBalanceRepository
             return null;
         }
 
-
         $oldAmount = $operator->cash;
         $tag = $tag ?: 'cash_update';
         $column = 'cash';
+        $userData = LogHelper::getUserLogData();
 
         DB::table('gp_operators')
             ->where('id', $operatorId)
@@ -33,12 +33,12 @@ class OperatorBalanceRepository
             'new_amount' => $newAmount,
             'tag' => $tag,
             'column' => $column,
+            'user_id' => $userData['user_id'],
+            'user_type' => $userData['user_type'],
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
         return $operator->refresh();
     }
-
-    
 }

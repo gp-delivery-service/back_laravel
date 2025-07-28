@@ -134,7 +134,17 @@ class ManagerPickupRepository
 
         $oldStatus = $pickup->status;
 
-        $pickup->update(['status' => $status]);
+        $updateData = ['status' => $status];
+
+        // Если статус REQUESTED, устанавливаем время начала поиска
+        if ($status === GpPickupStatus::REQUESTED->value) {
+            $updateData['search_started_at'] = now();
+        } else {
+            // Если статус изменился на что-то другое, очищаем время начала поиска
+            $updateData['search_started_at'] = null;
+        }
+
+        $pickup->update($updateData);
         return true;
     }
 
@@ -204,6 +214,7 @@ class ManagerPickupRepository
             'gp_pickups.system_note as system_note',
             'gp_pickups.preparing_time as preparing_time',
             'gp_pickups.closed_time as closed_time',
+            'gp_pickups.search_started_at as search_started_at',
             //
             'gp_pickups.company_id as company_id',
             'gp_companies.name as company_name',

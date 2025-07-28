@@ -16,5 +16,17 @@ class GpCompanyBalanceLog extends Model
         'new_amount',
         'tag',
         'column',
+        'user_id',
+        'user_type',
     ];
+
+    public function user()
+    {
+        return $this->morphTo();
+    }
+
+    public function company()
+    {
+        return $this->belongsTo(GpCompany::class);
+    }
 }

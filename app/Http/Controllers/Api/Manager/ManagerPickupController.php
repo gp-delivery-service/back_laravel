@@ -182,7 +182,7 @@ class ManagerPickupController extends Controller
                 'message' => 'An error occurred while updating the pickup.',
             ], 500);
         }
-        
+
         NodeService::callServiceRefresh();
 
         return response()->json(['message' => 'Pickup updated']);
