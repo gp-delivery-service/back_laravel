@@ -76,6 +76,20 @@ class EntityLogRepository
                     'created_at'
                 )
                 ->where('operator_id', $entityId);
+        } elseif ($entityType === 'pickup') {
+            $query = DB::table('gp_pickup_logs')
+                ->select(
+                    DB::raw("'pickup' as type"),
+                    'id',
+                    'pickup_id',
+                    'field',
+                    'old_value',
+                    'new_value',
+                    'user_id',
+                    'user_type',
+                    'created_at'
+                )
+                ->where('pickup_id', $entityId);
         } else {
             throw new \InvalidArgumentException('Unsupported entity type: ' . $entityType);
         }
@@ -87,6 +101,7 @@ class EntityLogRepository
         $companyIds = [];
         $driverIds = [];
         $operatorIds = [];
+        $pickupIds = [];
         $userIds = [];
 
         foreach ($items as $item) {
@@ -96,8 +111,10 @@ class EntityLogRepository
                 $driverIds[] = $item->driver_id;
             } elseif ($item->type === 'operator' && $item->operator_id) {
                 $operatorIds[] = $item->operator_id;
+            } else if ($item->type === 'pickup' && $item->pickup_id) {
+                $pickupIds[] = $item->pickup_id;
             }
-            
+
             if ($item->user_id && $item->user_type) {
                 $userIds[] = $item->user_id;
             }
@@ -120,6 +137,11 @@ class EntityLogRepository
             }
         }
 
+        $pickups = collect([]);
+        if (!empty($pickupIds)) {
+            $pickups = collect(\App\Models\GpPickup::whereIn('id', $pickupIds)->get())->keyBy('id');
+        }
+
         // Добавление связанных объектов к логам
         foreach ($items as $item) {
             if ($item->type === 'company' && isset($companies[$item->company_id])) {
@@ -128,8 +150,9 @@ class EntityLogRepository
                 $item->driver = $drivers[$item->driver_id];
             } elseif ($item->type === 'operator' && isset($operators[$item->operator_id])) {
                 $item->operator = $operators[$item->operator_id];
+            } elseif ($item->type === 'pickup' && isset($pickups[$item->pickup_id])) {
+                $item->pickup = $pickups[$item->pickup_id];
             }
-            
             $item->user = isset($users[$item->user_id]) ? $users[$item->user_id] : null;
         }
 
@@ -145,4 +168,4 @@ class EntityLogRepository
             ['path' => request()->url(), 'query' => request()->query()]
         );
     }
-} 
+}

@@ -6,11 +6,21 @@ use Illuminate\Support\Facades\Auth;
 
 class LogHelper
 {
+    protected static ?array $manualUser = null;
+
+    public static function setManualUser(?string $id, ?string $type)
+    {
+        self::$manualUser = $id && $type ? ['id' => $id, 'type' => $type] : null;
+    }
+
     /**
      * Получить текущего пользователя и его тип
      */
     public static function getCurrentUser(): ?array
     {
+        if (self::$manualUser) {
+            return self::$manualUser;
+        }
         $guard = Auth::getDefaultDriver();
         $user = Auth::user();
 
@@ -37,7 +47,7 @@ class LogHelper
     public static function getUserLogData(): array
     {
         $userData = self::getCurrentUser();
-        
+
         if (!$userData) {
             return [
                 'user_id' => null,
@@ -50,4 +60,4 @@ class LogHelper
             'user_type' => $userData['type'],
         ];
     }
-} 
+}

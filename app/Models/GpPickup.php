@@ -21,18 +21,22 @@ class GpPickup extends Model
         'preparing_time',
         'closed_time',
         'archived',
-        'search_started_at'
+        'search_started_at',
+        'picked_up_at',
+        'closed_at',
     ];
 
     protected $casts = [
         'status' => GpPickupStatus::class,
         'search_started_at' => 'datetime',
+        'picked_up_at' => 'datetime',
+        'closed_at' => 'datetime',
     ];
 
     protected static function booted(): void
     {
         static::updating(function ($model) {
-            $fieldsToLog = ['status', 'note', 'system_note'];
+            $fieldsToLog = ['status', 'note', 'system_note', 'picked_up_at', 'closed_at', 'driver_id', 'search_started_at'];
             $userData = LogHelper::getUserLogData();
 
             foreach ($fieldsToLog as $field) {
