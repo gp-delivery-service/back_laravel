@@ -165,8 +165,9 @@ class DriverTransactionsRepository
                 $a = abs($order->delivery_price);
                 $servicePart = ($a * ($driverFee / 100));
                 $driverPart = $a - $servicePart;
-                $this->driverBalanceRepository->addCashService($servicePart, $a, 'order_closed');
-                $this->driverBalanceRepository->addEarning($driverPart, $a, 'order_closed');
+                // throw new \RuntimeException("Delivery pay is client, cannot process order: sp " . $servicePart . " dp " . $driverPart);
+                $this->driverBalanceRepository->addCashService($driverId, $servicePart, 'order_closed');
+                $this->driverBalanceRepository->addEarning($driverId, $driverPart, 'order_closed');
             }
             // Если deliveryPay == balance
             if ($order->delivery_pay === 'balance') {

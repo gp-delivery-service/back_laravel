@@ -87,7 +87,7 @@ npm run build
 
 Удалить предыдущие временные файлы
 ```
-sudo rm -rf ~/projects/temp/*
+sudo rm -rf ~/projects/tmp/*
 ```
 Переместить на мак
 ```
@@ -107,6 +107,8 @@ docker compose restart nginx
 
 
 ....
+docker build -t node-socket-api .
+
 docker build -t node-geo .
 docker save -o node-geo.tar node-geo
 
