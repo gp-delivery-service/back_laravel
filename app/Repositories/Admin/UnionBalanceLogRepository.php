@@ -5,6 +5,7 @@ namespace App\Repositories\Admin;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use App\Repositories\Admin\OperatorRepository;
+use App\Models\GpClient;
 
 class UnionBalanceLogRepository
 {
@@ -65,6 +66,26 @@ class UnionBalanceLogRepository
                 DB::raw('NULL as company_id'),
                 DB::raw('NULL as driver_id'),
                 'operator_id',
+                DB::raw('NULL as client_id'),
+                'amount',
+                'old_amount',
+                'new_amount',
+                'tag',
+                'column',
+                'user_id',
+                'user_type',
+                'created_at'
+            );
+
+        // Подзапрос для клиента
+        $clientLogs = DB::table('gp_client_balance_logs')
+            ->select(
+                DB::raw("'client' as type"),
+                'id',
+                DB::raw('NULL as company_id'),
+                DB::raw('NULL as driver_id'),
+                DB::raw('NULL as operator_id'),
+                'client_id',
                 'amount',
                 'old_amount',
                 'new_amount',
@@ -76,7 +97,7 @@ class UnionBalanceLogRepository
             );
 
         // Объединение
-        $union = $companyLogs->unionAll($driverLogs)->unionAll($operatorLogs);
+        $union = $companyLogs->unionAll($driverLogs)->unionAll($operatorLogs)->unionAll($clientLogs);
 
         // Итоговый запрос с сортировкой
         $query = DB::table(DB::raw("({$union->toSql()}) as balance_logs"))
@@ -90,6 +111,7 @@ class UnionBalanceLogRepository
         $companyIds = [];
         $driverIds = [];
         $operatorIds = [];
+        $clientIds = [];
         $userIds = [];
 
         foreach ($items as $item) {
@@ -99,6 +121,8 @@ class UnionBalanceLogRepository
                 $driverIds[] = $item->driver_id;
             } elseif ($item->type === 'operator' && $item->operator_id) {
                 $operatorIds[] = $item->operator_id;
+            } elseif ($item->type === 'client' && $item->client_id) {
+                $clientIds[] = $item->client_id;
             }
             
             if ($item->user_id && $item->user_type) {
@@ -110,11 +134,12 @@ class UnionBalanceLogRepository
         $companies = collect($this->companyRepository->getItemsByIds($companyIds))->keyBy('id');
         $drivers = collect($this->driverRepository->getItemsByIds($driverIds))->keyBy('id');
         $operators = collect($this->operatorRepository->getItemsByIds($operatorIds))->keyBy('id');
+        $clients = collect(GpClient::whereIn('id', $clientIds)->get())->keyBy('id');
 
         // Получение пользователей
         $users = [];
         if (!empty($userIds)) {
-            $userTypes = ['App\Models\GpAdmin', 'App\Models\GpOperator', 'App\Models\GpDriver', 'App\Models\GpCompanyManager'];
+            $userTypes = ['App\Models\GpAdmin', 'App\Models\GpOperator', 'App\Models\GpDriver', 'App\Models\GpCompanyManager', 'App\Models\GpClient'];
             foreach ($userTypes as $userType) {
                 $modelUsers = $userType::whereIn('id', $userIds)->get()->keyBy('id');
                 foreach ($modelUsers as $user) {
@@ -124,7 +149,7 @@ class UnionBalanceLogRepository
         }
 
         // Привязка связанных сущностей
-        $items->transform(function ($item) use ($companies, $drivers, $operators, $users) {
+        $items->transform(function ($item) use ($companies, $drivers, $operators, $clients, $users) {
             $item->company = $item->type === 'company'
                 ? ($companies[$item->company_id] ?? null)
                 : null;
@@ -135,6 +160,10 @@ class UnionBalanceLogRepository
 
             $item->operator = $item->type === 'operator'
                 ? ($operators[$item->operator_id] ?? null)
+                : null;
+
+            $item->client = $item->type === 'client'
+                ? ($clients[$item->client_id] ?? null)
                 : null;
 
             $item->user = isset($users[$item->user_id]) ? $users[$item->user_id] : null;

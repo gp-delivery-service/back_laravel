@@ -52,6 +52,10 @@ return [
             'driver' => 'jwt',
             'provider' => 'gp_company_managers',
         ],
+        'api_client' => [
+            'driver' => 'jwt',
+            'provider' => 'gp_clients',
+        ],
     ],
 
     /*
@@ -87,6 +91,10 @@ return [
         'gp_company_managers' => [
             'driver' => 'eloquent',
             'model' => App\Models\GpCompanyManager::class,
+        ],
+        'gp_clients' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\GpClient::class,
         ],
     ],
 
