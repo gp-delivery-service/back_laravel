@@ -152,8 +152,10 @@ class ManagerPickupRepository
     {
         $pickup = GpPickup::findOrFail($pickupId);
 
-        $pickup->update(['driver_id' => $driverId, 'status' => GpPickupStatus::DRIVER_FOUND->value]);
 
+        $pickup->driver_id = $driverId;
+        $pickup->status = GpPickupStatus::DRIVER_FOUND->value;
+        $pickup->save();
         return true;
     }
 

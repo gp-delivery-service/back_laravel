@@ -245,4 +245,38 @@ class DriverBalanceRepository
 
         return $driver->refresh();
     }
+
+    public function addCashWallet($driverId, $amount, $tag)
+    {
+        $driver = GpDriver::find($driverId);
+        if (!$driver) {
+            return null;
+        }
+
+        $oldAmount = $driver->cash_wallet;
+        $tag = $tag ?: 'cash_wallet_update';
+        $column = 'cash_wallet';
+        $userData = LogHelper::getUserLogData();
+
+        DB::table('gp_drivers')
+            ->where('id', $driverId)
+            ->increment('cash_wallet', $amount);
+
+        $newAmount = GpDriver::find($driverId)->cash_wallet;
+
+        DB::table('gp_driver_balance_logs')->insert([
+            'driver_id' => $driverId,
+            'amount' => $amount,
+            'old_amount' => $oldAmount,
+            'new_amount' => $newAmount,
+            'tag' => $tag,
+            'column' => $column,
+            'user_id' => $userData['user_id'],
+            'user_type' => $userData['user_type'],
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return $driver->refresh();
+    }
 }

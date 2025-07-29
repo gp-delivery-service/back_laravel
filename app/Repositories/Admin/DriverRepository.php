@@ -73,6 +73,7 @@ class DriverRepository
             'gp_drivers.cash_company_balance as cash_company_balance',
             'gp_drivers.earning as earning',
             'gp_drivers.earning_pending as earning_pending',
+            'gp_drivers.cash_wallet as cash_wallet',
             'gp_drivers.created_at as created_at'
         );
         $items = $query->get();

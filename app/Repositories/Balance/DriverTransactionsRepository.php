@@ -84,6 +84,22 @@ class DriverTransactionsRepository
         NodeService::callLogsRefresh();
     }
 
+    // Пополнение cash_wallet водителя
+    public function cash_wallet_increase($driverId, $amount)
+    {
+        $sum = abs($amount);
+        $this->driverBalanceRepository->addCashWallet($driverId, $sum, 'cash_wallet_increase');
+        NodeService::callLogsRefresh();
+    }
+
+    // Списание с cash_wallet водителя
+    public function cash_wallet_decrease($driverId, $amount)
+    {
+        $sum = -abs($amount);
+        $this->driverBalanceRepository->addCashWallet($driverId, $sum, 'cash_wallet_decrease');
+        NodeService::callLogsRefresh();
+    }
+
     // Вызов принят водителем
     public function pickup_as_picked_up_price_check($pickupId, $driverId)
     {
@@ -238,6 +254,13 @@ class DriverTransactionsRepository
         if ($remaining > 0 && $driver->cash_company_balance > 0) {
             $toClose = min($remaining, $driver->cash_company_balance);
             $this->driverBalanceRepository->addCashCompanyBalance($driverId, -$toClose, 'cash_close');
+            $remaining -= $toClose;
+        }
+
+        // Закрываем cash_wallet
+        if ($remaining > 0 && $driver->cash_wallet > 0) {
+            $toClose = min($remaining, $driver->cash_wallet);
+            $this->driverBalanceRepository->addCashWallet($driverId, -$toClose, 'cash_close');
             $remaining -= $toClose;
         }
 

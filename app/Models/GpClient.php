@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-
 use App\Models\Contracts\AuthenticatableInterface;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,12 +9,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
-class GpDriver extends Model implements JWTSubject, AuthenticatableInterface
+class GpClient extends Model implements JWTSubject, AuthenticatableInterface
 {
     use HasFactory, Authenticatable;
 
-    protected $fillable = ['name', 'phone', 'car_name', 'car_number', 'image', 'balance', 'cash_client', 'cash_service', 'cash_goods', 'cash_company_balance', 'earning', 'earning_pending', 'cash_wallet'];
-    protected $appends = ['total_cash'];
+    protected $fillable = ['name', 'phone', 'wallet'];
     public $incrementing = false;
     protected $keyType = 'string';
 
@@ -36,11 +34,6 @@ class GpDriver extends Model implements JWTSubject, AuthenticatableInterface
 
     public function getJWTCustomClaims()
     {
-        return ['role' => 'driver'];
-    }
-
-    public function getTotalCashAttribute()
-    {
-        return $this->cash_client + $this->cash_service + $this->cash_company_balance;
+        return ['role' => 'client'];
     }
 }

@@ -7,9 +7,13 @@ use App\Http\Controllers\Api\Admin\AdminUserController;
 use App\Http\Controllers\Api\App\AppController;
 use App\Http\Controllers\Api\Dashboard\CompanyController;
 use App\Http\Controllers\Api\Driver\DriverPickupController;
+use App\Http\Controllers\Api\Driver\DriverClientBalanceController;
 use App\Http\Controllers\Api\Driver\DriverReturnCashController;
 use App\Http\Controllers\Api\Driver\DriverUserController;
 use App\Http\Controllers\Api\Driver\DriverWorkController;
+use App\Http\Controllers\Api\Client\ClientUserController;
+use App\Http\Controllers\Api\Client\ClientBalanceController;
+use App\Http\Controllers\Api\Client\ClientOrdersController;
 use App\Http\Controllers\Api\ImageUploadController;
 use App\Http\Controllers\Api\Manager\ManagerOrderController;
 use App\Http\Controllers\Api\Manager\ManagerPickupController;
@@ -20,6 +24,7 @@ use App\Http\Controllers\Api\Operator\OperatorCompaniesController;
 use App\Http\Controllers\Api\Operator\OperatorCompanyBalanceController;
 use App\Http\Controllers\Api\Operator\OperatorDriversController;
 use App\Http\Controllers\Api\Operator\OperatorUserController;
+use App\Http\Controllers\Api\Operator\OperatorClientsController;
 use App\Http\Controllers\Api\Operator\OperatorCompanyManagersController;
 use App\Http\Controllers\Api\Operator\OperatorDriverBalanceController;
 use App\Http\Controllers\Api\Operator\OperatorReturnCashController;
@@ -81,6 +86,9 @@ Route::middleware(['multi_role:operator,admin'])->put('/operator/companies/{id}'
 Route::middleware(['multi_role:operator,admin'])->get('/operator/company-balance/info/{company_id}', [OperatorCompanyBalanceController::class, 'getInfo']);
 Route::middleware(['multi_role:operator,admin'])->post('/operator/company-balance/credit-balance-increase', [OperatorCompanyBalanceController::class, 'creditIncrease']);
 Route::middleware(['multi_role:operator,admin'])->post('/operator/company-balance/balance-increase', [OperatorCompanyBalanceController::class, 'balanceIncrease']);
+// - CLIENTS
+Route::middleware(['multi_role:operator,admin'])->get('/operator/clients', [OperatorClientsController::class, 'index']);
+Route::middleware(['multi_role:operator,admin'])->get('/operator/clients/{id}', [OperatorClientsController::class, 'getInfo']);
 // - DRIVER BALANCE
 Route::middleware(['multi_role:operator,admin'])->get('/operator/driver-balance/info/{driver_id}', [OperatorDriverBalanceController::class, 'getInfo']);
 Route::middleware(['multi_role:operator,admin'])->post('/operator/driver-balance/balance-increase', [OperatorDriverBalanceController::class, 'balanceIncrease']);
@@ -111,11 +119,25 @@ Route::middleware(['auth:api_driver', 'role:driver'])->get('/driver/work/pickup/
 Route::middleware(['auth:api_driver', 'role:driver'])->put('/driver/work/pickup/{pickupId}/mark_as_picked_up', [DriverWorkController::class, 'pickupPickedUp']);
 Route::middleware(['auth:api_driver', 'role:driver'])->put('/driver/work/pickup/{pickupId}/mark_as_closed', [DriverWorkController::class, 'pickupClose']);
 Route::middleware(['auth:api_driver', 'role:driver'])->put('/driver/work/pickup_order/mark_as_closed', [DriverWorkController::class, 'orderClose']);
+// - CLIENT BALANCE
+Route::middleware(['auth:api_driver', 'role:driver'])->post('/driver/client-balance/top-up', [DriverClientBalanceController::class, 'topUpClientWallet']);
+Route::middleware(['auth:api_driver', 'role:driver'])->get('/driver/client-balance/info', [DriverClientBalanceController::class, 'getClientInfo']);
 // - RETURN CASH
 Route::middleware(['auth:api_driver', 'role:driver'])->get('/driver/return-cash/operators', [DriverReturnCashController::class, 'getOperatorsList']);
 Route::middleware(['auth:api_driver', 'role:driver'])->post('/driver/return-cash/amount', [DriverReturnCashController::class, 'getReturnCashAmountWithCode']);
 Route::middleware(['auth:api_driver', 'role:driver'])->post('/driver/return-cash/confirm', [DriverReturnCashController::class, 'confirmReturnCash']);
 
+
+// CLIENT
+// - AUTH
+Route::post('/client/auth/sms', [ClientUserController::class, 'sendCode']);
+Route::post('/client/auth/login', [ClientUserController::class, 'login']);
+Route::middleware(['auth:api_client', 'role:client'])->get('/client/auth/user', [ClientUserController::class, 'user']);
+// - BALANCE
+Route::middleware(['auth:api_client', 'role:client'])->get('/client/balance/info', [ClientBalanceController::class, 'getInfo']);
+// - ORDERS
+Route::middleware(['auth:api_client', 'role:client'])->get('/client/orders', [ClientOrdersController::class, 'index']);
+Route::middleware(['auth:api_client', 'role:client'])->get('/client/orders/{id}', [ClientOrdersController::class, 'getInfo']);
 
 // MANAGER
 // - AUTH

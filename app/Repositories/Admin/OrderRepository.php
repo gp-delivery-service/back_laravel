@@ -53,6 +53,12 @@ class OrderRepository
         return $item;
     }
 
+    // Получение заказов по массиву ID
+    public function getItemsByIds(array $ids = [])
+    {
+        return $this->getItems($ids);
+    }
+
     // Получение статуса заказа из pickup_orders по order_id, если есть
     public function getOrderAvailableFields($orderId)
     {
