@@ -98,6 +98,7 @@ class DriverPickupRepository
                 throw ValidationException::withMessages(['pickup' => 'Error checking pickup price']);
             }
             $pickup->status = GpPickupStatus::PICKED_UP;
+            $pickup->picked_up_at = now();
             $pickup->save();
         });
 
@@ -116,6 +117,7 @@ class DriverPickupRepository
 
         DB::transaction(function () use ($pickup) {
             $pickup->status = GpPickupStatus::CLOSED;
+            $pickup->closed_at = now();
             $pickup->save();
         });
 

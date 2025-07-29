@@ -8,18 +8,22 @@ use App\Models\GpPickup;
 use App\Repositories\Manager\ManagerPickupRepository;
 use App\Services\NodeService;
 use Illuminate\Http\Request;
+use App\Helpers\LogHelper;
 
 class DriverPickupController extends Controller
 {
     public function __construct(protected ManagerPickupRepository $repository) {}
 
-    
+
     public function takePickup(Request $request)
     {
         $validated = $request->validate([
             'pickup_id' => 'required|integer|exists:gp_pickups,id',
             'driver_uuid' => 'required|string|exists:gp_drivers,id',
         ]);
+
+        // Устанавливаем пользователя вручную для логирования
+        LogHelper::setManualUser($validated['driver_uuid'], 'App\\Models\\GpDriver');
 
         $pickup = GpPickup::findOrFail($validated['pickup_id']);
 
