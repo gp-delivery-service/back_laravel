@@ -201,7 +201,7 @@ class ManagerOrderController extends Controller
 
         if (!$order) {
             return response()->json(['error' => 'Ошибка при создании заказа'], 500);
-        }
+        } 
 
         // ✅ Создание пикапа
         $pickupData = [
@@ -218,7 +218,7 @@ class ManagerOrderController extends Controller
         }
 
         // ✅ Перевод пикапа в статус "поиск водителя"
-        $statusUpdated = app(ManagerPickupRepository::class)->switchStatus($pickup->id, GpPickupStatus::REQUESTED);
+        $statusUpdated = app(ManagerPickupRepository::class)->switchStatus($pickup->id, GpPickupStatus::REQUESTED->value);
 
         if (!$statusUpdated) {
             return response()->json(['error' => 'Ошибка при запуске поиска водителя'], 500);

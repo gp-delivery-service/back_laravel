@@ -105,6 +105,7 @@ class ManagerPickupController extends Controller
                 'message' => 'An error occurred while creating the pickup.',
             ], 500);
         }
+        
         return response()->json(['message' => 'Pickup created']);
     }
 

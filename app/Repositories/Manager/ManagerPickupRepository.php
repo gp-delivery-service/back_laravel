@@ -67,12 +67,18 @@ class ManagerPickupRepository
     public function create(array $data): GpPickup
     {
         return DB::transaction(function () use ($data) {
-            $pickup = GpPickup::create([
+            
+            $createData = [
                 'company_id' => $data['company_id'],
                 'note' => $data['note'] ?? null,
                 'preparing_time' => $data['preparing_time'] ?? null,
                 'status' => GpPickupStatus::PREPARING->value,
-            ]);
+            ];
+            
+            $pickup = GpPickup::create($createData);
+            
+            // Проверяем, что поле сохранилось
+            $pickup->refresh();
 
             if (!empty($data['order_ids'])) {
                 $orders = GpOrder::whereIn('id', $data['order_ids'])->get();
@@ -88,7 +94,7 @@ class ManagerPickupRepository
                     ]);
                 }
             }
-
+            $pickup->refresh();
             return $pickup;
         });
     }
@@ -127,15 +133,15 @@ class ManagerPickupRepository
     public function switchStatus(int $id, $status): bool
     {
         $pickup = GpPickup::findOrFail($id);
-
+        
         if ($pickup->status === $status) {
             return false;
         }
-
+        
         $oldStatus = $pickup->status;
-
+        
         $updateData = ['status' => $status];
-
+        
         // Если статус REQUESTED, устанавливаем время начала поиска
         if ($status === GpPickupStatus::REQUESTED->value) {
             $updateData['search_started_at'] = now();

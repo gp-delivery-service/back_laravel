@@ -30,9 +30,10 @@ class ClientOrdersController extends Controller
 
         $perPage = $request->input('per_page', 20);
         
-        // Получаем заказы клиента по номеру телефона
+        // Получаем заказы клиента по номеру телефона (сравниваем без пробелов)
+        $clientPhoneNoSpaces = str_replace(' ', '', $user->phone);
         $paginator = GpOrder::select('gp_orders.id as id')
-            ->where('gp_orders.client_phone', $user->phone)
+            ->whereRaw('REPLACE(gp_orders.client_phone, " ", "") = ?', [$clientPhoneNoSpaces])
             ->orderBy('gp_orders.created_at', 'desc')
             ->paginate($perPage);
 
@@ -78,9 +79,10 @@ class ClientOrdersController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        // Проверяем, что заказ принадлежит клиенту
+        // Проверяем, что заказ принадлежит клиенту (сравниваем без пробелов)
+        $clientPhoneNoSpaces = str_replace(' ', '', $user->phone);
         $order = GpOrder::where('id', $orderId)
-            ->where('client_phone', $user->phone)
+            ->whereRaw('REPLACE(client_phone, " ", "") = ?', [$clientPhoneNoSpaces])
             ->first();
 
         if (!$order) {
