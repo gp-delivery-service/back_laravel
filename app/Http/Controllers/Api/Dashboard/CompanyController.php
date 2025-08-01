@@ -36,5 +36,6 @@ class CompanyController extends Controller
         'api_operator' => 'operator',
         'api_manager' => 'manager',
         'api_driver' => 'driver',
+        'api_client' => 'client',
     ];
 }

@@ -15,10 +15,11 @@ class UserController extends Controller
             'api_operator' => 'operator',
             'api_manager' => 'manager',
             'api_driver' => 'driver',
+            'api_client' => 'client',
         ];
         
         $user = Auth::user();
-        $user = $user->toArray();
+        $user = $user ? $user->toArray() : [];
         $guard = Auth::getDefaultDriver();
         $user['role'] = $guardToRole[$guard] ?? 'unknown';
         return response()->json($user);

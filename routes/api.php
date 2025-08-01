@@ -164,7 +164,7 @@ Route::middleware(['multi_role:operator,admin,manager'])->post('/manager/pickups
 
 
 // MULTIROLE
-Route::middleware(['multi_role:admin,operator,manager,driver'])->get('/multirole/user', [UserController::class, 'user']);
+Route::middleware(['multi_role:admin,operator,manager,driver,client'])->get('/multirole/user', [UserController::class, 'user']);
 Route::middleware(['multi_role:admin,operator,manager,driver'])->post('/multirole/store/upload', [ImageUploadController::class, 'upload']);
 Route::middleware(['multi_role:admin,operator,manager,driver'])->post('/multirole/store/delete', [ImageUploadController::class, 'delete']);
 

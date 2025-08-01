@@ -27,7 +27,7 @@ class MultiRoleMiddleware
     {
         foreach ($roles as $role) {
             $guard = $this->roleToGuard[$role] ?? null;
-
+            
             if ($guard && Auth::guard($guard)->check()) {
                 $user = Auth::guard($guard)->user();
                 $claims = $user->getJWTCustomClaims();
@@ -39,6 +39,6 @@ class MultiRoleMiddleware
             }
         }
 
-        return response()->json(['error' => 'Unauthorized'], 403);
+        return response()->json(['error' => 'Unauthorized', 'roles' => $roles], 403);
     }
 }
