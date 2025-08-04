@@ -16,7 +16,7 @@ class ManagerPickupController extends Controller
     public function __construct(protected ManagerPickupRepository $repository) {}
 
 
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
         $guard = Auth::getDefaultDriver();
@@ -28,8 +28,27 @@ class ManagerPickupController extends Controller
             ], 403);
         }
 
+        $filters = $request->only([
+            'status',
+            'search_id',
+            'search_note',
+            'search_driver',
+            'company_id',
+            'date_from',
+            'date_to'
+        ]);
 
-        $items = $this->repository->getItemsWithPagination($user->id, $user->company_id, 20);
+        $request->validate([
+            'status' => 'nullable|string|in:' . implode(',', array_column(GpPickupStatus::cases(), 'value')),
+            'search_id' => 'nullable|string|max:50',
+            'search_note' => 'nullable|string|max:255',
+            'search_driver' => 'nullable|string|max:255',
+            'company_id' => 'nullable|string|exists:gp_companies,id',
+            'date_from' => 'nullable|date',
+            'date_to' => 'nullable|date|after_or_equal:date_from'
+        ]);
+
+        $items = $this->repository->getItemsWithPagination($user->id, $user->company_id, 20, $filters);
 
         return response()->json([
             'items' => $items->items(),
@@ -105,7 +124,7 @@ class ManagerPickupController extends Controller
                 'message' => 'An error occurred while creating the pickup.',
             ], 500);
         }
-        
+
         return response()->json(['message' => 'Pickup created']);
     }
 

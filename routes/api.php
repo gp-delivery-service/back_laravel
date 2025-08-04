@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\ImageUploadController;
 use App\Http\Controllers\Api\Manager\ManagerOrderController;
 use App\Http\Controllers\Api\Manager\ManagerPickupController;
 use App\Http\Controllers\Api\Manager\ManagerUserController;
+use App\Http\Controllers\Api\Manager\ManagerCompanyController;
 use App\Http\Controllers\Api\Map\MapGeoController;
 use App\Http\Controllers\Api\Multirole\UserController;
 use App\Http\Controllers\Api\Operator\OperatorCompaniesController;
@@ -126,6 +127,7 @@ Route::middleware(['auth:api_driver', 'role:driver'])->get('/driver/client-balan
 Route::middleware(['auth:api_driver', 'role:driver'])->get('/driver/return-cash/operators', [DriverReturnCashController::class, 'getOperatorsList']);
 Route::middleware(['auth:api_driver', 'role:driver'])->post('/driver/return-cash/amount', [DriverReturnCashController::class, 'getReturnCashAmountWithCode']);
 Route::middleware(['auth:api_driver', 'role:driver'])->post('/driver/return-cash/confirm', [DriverReturnCashController::class, 'confirmReturnCash']);
+Route::middleware(['auth:api_driver', 'role:driver'])->post('/driver/return-cash/reset-earning', [DriverReturnCashController::class, 'resetEarning']);
 
 
 // CLIENT
@@ -161,6 +163,9 @@ Route::middleware(['multi_role:operator,admin,manager'])->put('/manager/pickups/
 Route::middleware(['multi_role:operator,admin,manager'])->post('/manager/pickups/{id}/add-orders', [ManagerPickupController::class, 'addOrders']);
 Route::middleware(['multi_role:operator,admin,manager'])->post('/manager/pickups/{id}/remove-orders', [ManagerPickupController::class, 'removeOrders']);
 Route::middleware(['multi_role:operator,admin,manager'])->post('/manager/pickups/{id}/status', [ManagerPickupController::class, 'changeStatus']);
+// - COMPANIES
+Route::middleware(['multi_role:admin,manager'])->get('/manager/companies', [ManagerCompanyController::class, 'index']);
+Route::middleware(['multi_role:admin,manager'])->get('/manager/companies/{id}', [ManagerCompanyController::class, 'show']);
 
 
 // MULTIROLE

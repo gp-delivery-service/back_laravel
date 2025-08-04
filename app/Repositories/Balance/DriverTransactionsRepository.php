@@ -267,4 +267,25 @@ class DriverTransactionsRepository
         NodeService::callLogsRefresh();
         return true;
     }
+
+    public function resetEarning($driverId)
+    {
+        $driver = GpDriver::find($driverId);
+        if (!$driver) {
+            return 'Driver not found';
+        }
+
+        if ($driver->earning == 0) {
+            return 'Earning is already zero';
+        }
+
+        try {
+            $this->driverBalanceRepository->resetEarning($driverId, 'earning_reset');
+            NodeService::callLogsRefresh();
+
+            return true;
+        } catch (\Exception $e) {
+            return 'Error resetting earning: ' . $e->getMessage();
+        }
+    }
 }

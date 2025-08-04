@@ -279,4 +279,41 @@ class DriverBalanceRepository
 
         return $driver->refresh();
     }
+
+    public function resetEarning($driverId, $tag = null)
+    {
+        return DB::transaction(function () use ($driverId, $tag) {
+            $driver = GpDriver::find($driverId);
+            if (!$driver) {
+                return null;
+            }
+
+            $oldAmount = $driver->earning;
+            $tag = $tag ?: 'earning_reset';
+            $column = 'earning';
+            $userData = LogHelper::getUserLogData();
+
+            $resetAmount = -$oldAmount;
+            DB::table('gp_drivers')
+                ->where('id', $driverId)
+                ->increment('earning', $resetAmount);
+
+            $newAmount = 0;
+
+            DB::table('gp_driver_balance_logs')->insert([
+                'driver_id' => $driverId,
+                'amount' => $resetAmount,
+                'old_amount' => $oldAmount,
+                'new_amount' => $newAmount,
+                'tag' => $tag,
+                'column' => $column,
+                'user_id' => $userData['user_id'],
+                'user_type' => $userData['user_type'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            return $driver->refresh();
+        });
+    }
 }

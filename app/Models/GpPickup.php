@@ -33,6 +33,21 @@ class GpPickup extends Model
         'closed_at' => 'datetime',
     ];
 
+    public function driver()
+    {
+        return $this->belongsTo(GpDriver::class, 'driver_id');
+    }
+
+    public function company()
+    {
+        return $this->belongsTo(GpCompany::class, 'company_id');
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(GpPickupOrder::class, 'pickup_id');
+    }
+
     protected static function booted(): void
     {
         static::updating(function ($model) {

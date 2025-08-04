@@ -148,4 +148,35 @@ class DriverReturnCashController extends Controller
     {
         return str_pad(random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
     }
+
+    public function resetEarning()
+    {
+        $user = auth()->guard('api_driver')->user();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'Unauthorized',
+                'status' => false,
+            ], 401);
+        }
+
+        $driverTransactionRepository = new DriverTransactionsRepository(new DriverBalanceRepository());
+
+        $result = $driverTransactionRepository->resetEarning($user->id);
+
+        if ($result !== true) {
+            return response()->json([
+                'message' => $result,
+                'status' => false,
+            ], 400);
+        }
+        
+        $user = auth()->guard('api_driver')->user();
+
+        return response()->json([
+            'message' => 'Earning counter reset successfully',
+            'status' => true,
+            'earning' => $user->earning,
+        ]);
+    }
 }
