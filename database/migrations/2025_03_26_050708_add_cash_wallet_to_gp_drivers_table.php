@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('gp_drivers', function (Blueprint $table) {
-            $table->decimal('cash_wallet', 10, 2)->default(0)->after('earning_pending');
+            $table->decimal('cash_wallet', 10, 2)->default(0);
         });
     }
 
@@ -25,4 +25,4 @@ return new class extends Migration
             $table->dropColumn('cash_wallet');
         });
     }
-}; 
+};

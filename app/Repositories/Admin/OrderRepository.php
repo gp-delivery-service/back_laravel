@@ -78,9 +78,7 @@ class OrderRepository
             // 'lng',
         ];
 
-        $fields_accepted = [
-            
-        ];
+        $fields_accepted = [];
         if ($status === GpPickupOrderStatus::ACCEPTED) {
             return $fields_accepted;
         }
@@ -121,6 +119,8 @@ class OrderRepository
         $query->leftJoin('gp_map_districts', 'gp_orders.district_id', '=', 'gp_map_districts.id');
         $query->leftJoin('gp_map_streets as streets', 'gp_orders.street_id', '=', 'streets.id');
         $query->leftJoin('gp_map_streets as second_streets', 'gp_orders.second_street_id', '=', 'second_streets.id');
+        $query->leftJoin('gp_pickup_orders', 'gp_orders.id', '=', 'gp_pickup_orders.order_id');
+        $query->leftJoin('gp_pickups', 'gp_pickup_orders.pickup_id', '=', 'gp_pickups.id');
         $query->select(
             'gp_orders.id as id',
             //
@@ -142,6 +142,9 @@ class OrderRepository
             'gp_orders.geo_comment as geo_comment',
             'gp_orders.lat as lat',
             'gp_orders.lng as lng',
+            //
+            'gp_pickup_orders.status as status',
+            'gp_pickups.driver_id as driver_id',
             //
             'gp_orders.created_at as created_at',
             'gp_orders.updated_at as updated_at'

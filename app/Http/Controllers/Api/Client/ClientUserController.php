@@ -97,6 +97,7 @@ class ClientUserController extends Controller
                 'phone' => 'required|string|min:8|max:8',
                 'salt' => 'required|string|min:6|max:6',
                 'sms' => 'required|string|min:6|max:6',
+                'fcm_token' => 'nullable|string', // Добавляем FCM токен как опциональное поле
             ]);
 
             $user = GpClient::where(['phone' => $request->phone])->first();
@@ -128,6 +129,11 @@ class ClientUserController extends Controller
             }
 
             GpClientSms::where('user_id', $user->id)->delete();
+
+            // Обновляем FCM токен если передан
+            if ($request->has('fcm_token') && $request->fcm_token) {
+                $user->update(['fcm_token' => $request->fcm_token]);
+            }
 
             $profile = $user;
             Auth::guard('api_client')->factory()->setTTL(10080);

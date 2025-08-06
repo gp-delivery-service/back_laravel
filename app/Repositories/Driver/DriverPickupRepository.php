@@ -6,6 +6,7 @@ use App\Constants\GpPickupOrderStatus;
 use App\Models\GpPickup;
 use App\Models\GpOrder;
 use App\Models\GpPickupOrder;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\DB;
 use App\Constants\GpPickupStatus;
 use App\Repositories\Balance\DriverBalanceRepository;
@@ -15,6 +16,13 @@ use Illuminate\Validation\ValidationException;
 
 class DriverPickupRepository
 {
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
     public function availablePickups()
     {
         $query = GpPickup::query();
@@ -142,6 +150,54 @@ class DriverPickupRepository
             $order->status = GpPickupOrderStatus::DELIVERED;
             $order->save();
         });
+
+        // Получаем заказ для отправки уведомления
+        $orderModel = GpOrder::find($order->order_id);
+        if ($orderModel) {
+            // Отправляем уведомление клиенту о том, что заказ доставлен
+            $this->notificationService->sendOrderStatusNotification(
+                $orderModel,
+                'delivered'
+            );
+        }
+
+        return $this->getPickupById($order->pickup_id, $order->driver_id);
+    }
+
+    /**
+     * Установить статус заказа как "ожидает клиента" и отправить уведомление
+     */
+    public function setOrderWaitingClient($pickupOrderId, $driverId)
+    {
+        $order = GpPickupOrder::query()
+            ->where('id', $pickupOrderId)
+            ->first();
+        if (!$order) {
+            throw ValidationException::withMessages(['order' => 'Order not found']);
+        }
+
+        // Проверяем, что водитель имеет доступ к этому заказу
+        $pickup = GpPickup::where('id', $order->pickup_id)
+            ->where('driver_id', $driverId)
+            ->first();
+        if (!$pickup) {
+            throw ValidationException::withMessages(['order' => 'Order not found or unauthorized']);
+        }
+
+        DB::transaction(function () use ($order) {
+            $order->status = GpPickupOrderStatus::WAITING_CLIENT;
+            $order->save();
+        });
+
+        // Получаем заказ для отправки уведомления
+        $orderModel = GpOrder::find($order->order_id);
+        if ($orderModel) {
+            // Отправляем уведомление клиенту о том, что водитель прибыл
+            $this->notificationService->sendOrderStatusNotification(
+                $orderModel,
+                'waiting_client'
+            );
+        }
 
         return $this->getPickupById($order->pickup_id, $order->driver_id);
     }

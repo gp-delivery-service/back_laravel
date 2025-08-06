@@ -63,6 +63,22 @@ class NodeService
         );
     }
 
+    public static function sendPushNotification(string $fcmToken, string $title, string $message, array $data = []): array
+    {
+        $url = rtrim(config('services.node.http_url'), '/') . '/push/send';
+
+        return self::sendRequestWithRetry(
+            $url,
+            array(
+                'fcm_token' => $fcmToken,
+                'title' => $title,
+                'message' => $message,
+                'data' => $data,
+            ),
+            'post'
+        );
+    }
+
     // Приватный метод для повторных попыток
     private static function sendRequestWithRetry(string $url, array $payload = [], string $method = 'get', int $maxAttempts = 1, int $delayMs = 1000): array
     {

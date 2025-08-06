@@ -13,7 +13,7 @@ class GpClient extends Model implements JWTSubject, AuthenticatableInterface
 {
     use HasFactory, Authenticatable;
 
-    protected $fillable = ['name', 'phone', 'wallet'];
+    protected $fillable = ['name', 'phone', 'wallet', 'fcm_token'];
     public $incrementing = false;
     protected $keyType = 'string';
 

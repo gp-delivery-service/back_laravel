@@ -14,7 +14,10 @@ use Illuminate\Support\Facades\Auth;
 
 class DriverWorkController extends Controller
 {
-    public function __construct(protected DriverPickupRepository $repository) {}
+    public function __construct(
+        protected DriverPickupRepository $repository,
+        protected OrderRepository $orderRepository
+    ) {}
 
 
     public function availableFlow(Request $request)
@@ -106,8 +109,7 @@ class DriverWorkController extends Controller
         }
         try {
             $updated_pickup =  $this->repository->markPickupAsPickedUp($pickupId, $user->id);
-            $orderRepository = new OrderRepository();
-            $orderRepository->setPickupOrdersAccepted($pickupId);
+            $this->orderRepository->setPickupOrdersAccepted($pickupId);
             NodeService::callPickupsRefresh();
             return response()->json($updated_pickup);
         } catch (\Exception $e) {
@@ -192,5 +194,53 @@ class DriverWorkController extends Controller
         NodeService::callPickupsRefresh();
 
         return response()->json($pickup);
+    }
+
+    /**
+     * Водитель прибыл к клиенту - установить статус "ожидает клиента"
+     */
+    public function orderWaitingClient(Request $request)
+    {
+        $user = Auth::guard('api_driver')->user();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'Unauthorized',
+                'status' => false,
+            ], 401);
+        }
+
+        $validatedData = $request->validate([
+            'pickup_order_id' => 'required|integer|exists:gp_pickup_orders,id',
+        ]);
+
+        $pickupOrder = GpPickupOrder::find($validatedData['pickup_order_id']);
+
+        $driverHasPickups = GpPickup::where('driver_id', $user->id)
+            ->where('id', $pickupOrder->pickup_id)
+            ->exists();
+
+        $orderCanBeWaiting = in_array($pickupOrder->status, [
+            GpPickupOrderStatus::INHERITED,
+            GpPickupOrderStatus::ACCEPTED,
+        ]);
+
+        if ($pickupOrder == null || !$driverHasPickups || !$orderCanBeWaiting) {
+            return response()->json([
+                'message' => 'Pickup or order not found or unauthorized',
+                'status' => false,
+            ], 404);
+        }
+
+        try {
+            $pickup = $this->repository->setOrderWaitingClient($pickupOrder->id, $user->id);
+            NodeService::callPickupsRefresh();
+            return response()->json($pickup);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error setting order as waiting client: ' . $e->getMessage(),
+                'status' => false,
+            ], 500);
+        }
     }
 }

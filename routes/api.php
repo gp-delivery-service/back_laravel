@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\Driver\DriverWorkController;
 use App\Http\Controllers\Api\Client\ClientUserController;
 use App\Http\Controllers\Api\Client\ClientBalanceController;
 use App\Http\Controllers\Api\Client\ClientOrdersController;
+use App\Http\Controllers\Api\Client\ClientNotificationsController;
 use App\Http\Controllers\Api\ImageUploadController;
 use App\Http\Controllers\Api\Manager\ManagerOrderController;
 use App\Http\Controllers\Api\Manager\ManagerPickupController;
@@ -140,6 +141,13 @@ Route::middleware(['auth:api_client', 'role:client'])->get('/client/balance/info
 // - ORDERS
 Route::middleware(['auth:api_client', 'role:client'])->get('/client/orders', [ClientOrdersController::class, 'index']);
 Route::middleware(['auth:api_client', 'role:client'])->get('/client/orders/{id}', [ClientOrdersController::class, 'getInfo']);
+// - NOTIFICATIONS
+Route::middleware(['auth:api_client', 'role:client'])->get('/client/notifications', [ClientNotificationsController::class, 'index']);
+Route::middleware(['auth:api_client', 'role:client'])->get('/client/notifications/{id}', [ClientNotificationsController::class, 'show']);
+Route::middleware(['auth:api_client', 'role:client'])->put('/client/notifications/{id}/read', [ClientNotificationsController::class, 'markAsRead']);
+Route::middleware(['auth:api_client', 'role:client'])->put('/client/notifications/read-all', [ClientNotificationsController::class, 'markAllAsRead']);
+
+Route::middleware(['auth:api_client', 'role:client'])->get('/client/notifications/unread-count', [ClientNotificationsController::class, 'unreadCount']);
 
 // MANAGER
 // - AUTH
