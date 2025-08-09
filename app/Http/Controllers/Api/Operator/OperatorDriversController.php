@@ -89,6 +89,23 @@ class OperatorDriversController extends Controller
             'is_active' => 'nullable|boolean',
         ]);
 
+        // Проверка: нельзя отключить водителя с ненулевыми балансами
+        if (isset($validated['is_active']) && $validated['is_active'] === false) {
+            $driver = $this->itemRepository->getItemById($id);
+            
+            if ($driver && (
+                $driver->cash_client != 0 ||
+                $driver->cash_service != 0 ||
+                $driver->cash_goods != 0 ||
+                $driver->cash_company_balance != 0 ||
+                $driver->cash_wallet != 0
+            )) {
+                return response()->json([
+                    'error' => 'Нельзя отключить водителя с ненулевыми балансами. Сначала закройте все кассы.'
+                ], 422);
+            }
+        }
+
         $updated = $this->itemRepository->update($id, $validated);
 
         if (!$updated) {

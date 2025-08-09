@@ -223,7 +223,7 @@ class DriverTransactionsRepository
 
         $remaining = $sum;
 
-        $totalDebt = $driver->cash_client + $driver->cash_service + $driver->cash_company_balance;
+        $totalDebt = $driver->cash_client + $driver->cash_service + $driver->cash_company_balance + $driver->cash_wallet;
 
         if ($sum > $totalDebt) {
             throw new \RuntimeException("Сумма {$sum} превышает общий долг водителя ({$totalDebt})");

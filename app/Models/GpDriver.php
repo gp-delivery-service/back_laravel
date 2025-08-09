@@ -41,7 +41,7 @@ class GpDriver extends Model implements JWTSubject, AuthenticatableInterface
 
     public function getTotalCashAttribute()
     {
-        return $this->cash_client + $this->cash_service + $this->cash_company_balance;
+        return $this->cash_client + $this->cash_service + $this->cash_company_balance + $this->cash_wallet;
     }
 
     public function scopeActive($query)

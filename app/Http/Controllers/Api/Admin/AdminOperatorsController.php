@@ -99,6 +99,19 @@ class AdminOperatorsController extends Controller
             ], 422);
         }
 
+        // Проверка: нельзя отключить оператора с незакрытой кассой
+        if (
+            isset($validated['is_active']) &&
+            $operator->is_active == true &&
+            $validated['is_active'] === false &&
+            $operator->cashier == true &&
+            $operator->cash != 0
+        ) {
+            return response()->json([
+                'error' => 'Нельзя отключить оператора-кассира с ненулевым кассовым балансом. Сначала закройте кассу.'
+            ], 422);
+        }
+
         $updated = $this->itemRepository->update($id, $validated);
 
         if (!$updated) {

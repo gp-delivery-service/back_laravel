@@ -65,7 +65,7 @@ class GpOperator extends Model implements JWTSubject, AuthenticatableInterface
                         'column'       => $field,
                         'user_id'      => $userData['user_id'],
                         'user_type'    => $userData['user_type'],
-                        'created_at'   => now()->timestamp,
+                        'created_at'   => now(),
                     ]);
                 }
             }
