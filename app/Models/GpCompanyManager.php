@@ -14,7 +14,7 @@ class GpCompanyManager extends Model implements JWTSubject, AuthenticatableInter
 {
     use HasFactory, Authenticatable;
 
-    protected $fillable = ['name', 'email', 'password', 'company_id'];
+    protected $fillable = ['name', 'email', 'password', 'company_id', 'is_active'];
 
     protected $hidden = ['password'];
 
@@ -39,5 +39,10 @@ class GpCompanyManager extends Model implements JWTSubject, AuthenticatableInter
     public function getJWTCustomClaims()
     {
         return ['role' => 'manager'];
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
     }
 }

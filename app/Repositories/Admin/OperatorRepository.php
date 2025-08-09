@@ -8,13 +8,21 @@ use Illuminate\Support\Facades\DB;
 class OperatorRepository
 {
     // Получение с пагинацией
-    public function getItemsWithPagination($userUuid, $perPage = 20)
+    public function getItemsWithPagination($userUuid, $perPage = 20, $status = null)
     {
-        $paginator = GpOperator::select('gp_operators.id as id')
-            ->orderBy('created_at', 'desc')
-            ->paginate($perPage);
+        $query = GpOperator::select('gp_operators.id as id');
+
+        // Применяем фильтр по статусу
+        if ($status === 'active') {
+            $query->where('is_active', true);
+        } elseif ($status === 'inactive') {
+            $query->where('is_active', false);
+        }
+        // Если $status === 'all' или null, то показываем всех
+
+        $paginator = $query->orderBy('created_at', 'desc')->paginate($perPage);
         $items_ids = $paginator->pluck('id')->toArray();
-        $items = $this->getItems($items_ids);
+        $items = $this->getItems($items_ids, $status);
         $ordered_items = $items->sortBy(function ($item) use ($items_ids) {
             return array_search($item->id, $items_ids);
         })->values();
@@ -75,21 +83,31 @@ class OperatorRepository
         return $updated;
     }
 
-    public function getItemsByIds(array $ids = [])
+    public function getItemsByIds(array $ids = [], $status = null)
     {
-        return $this->getItems($ids);
+        return $this->getItems($ids, $status);
     }
 
-    private function getItems(array $ids = [])
+    private function getItems(array $ids = [], $status = null)
     {
         $query = GpOperator::query();
         $query->whereIn('gp_operators.id', $ids);
+
+        // Применяем фильтр по статусу
+        if ($status === 'active') {
+            $query->where('is_active', true);
+        } elseif ($status === 'inactive') {
+            $query->where('is_active', false);
+        }
+        // Если $status === 'all' или null, то показываем всех
+
         $query->select(
             'gp_operators.id as id',
             'gp_operators.name as name',
             'gp_operators.email as email',
             'gp_operators.cashier as cashier',
             'gp_operators.cash as cash',
+            'gp_operators.is_active as is_active',
             'gp_operators.created_at as created_at'
         );
         $items = $query->get();

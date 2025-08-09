@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Api\Operator;
 
 use App\Http\Controllers\Controller;
 use App\Repositories\Admin\DriverRepository;
+use App\Models\GpDriver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class OperatorDriversController extends Controller
 {
@@ -17,11 +20,18 @@ class OperatorDriversController extends Controller
         $this->itemRepository = $itemRepository;
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
 
-        $items = $this->itemRepository->getItemsWithPagination($user->id, 20);
+        // Получаем параметр статуса из запроса
+        $status = $request->get('status');
+
+        Log::info('Drivers API called with status: ' . $status);
+
+        $items = $this->itemRepository->getItemsWithPagination($user->id, 20, $status);
+
+        Log::info('Drivers API returned ' . count($items->items()) . ' items');
 
         return response()->json([
             'items' => $items->items(),
@@ -76,6 +86,7 @@ class OperatorDriversController extends Controller
             ],
             'car_name' => 'required|string',
             'car_number' => 'required|string',
+            'is_active' => 'nullable|boolean',
         ]);
 
         $updated = $this->itemRepository->update($id, $validated);
@@ -85,5 +96,14 @@ class OperatorDriversController extends Controller
         }
 
         return response()->json(['message' => 'Driver updated']);
+    }
+
+    public function delete($id)
+    {
+        $deleted = $this->itemRepository->delete($id);
+        if (!$deleted) {
+            return response()->json(['error' => 'Driver not found'], 404);
+        }
+        return response()->json(['message' => 'Driver deleted']);
     }
 }

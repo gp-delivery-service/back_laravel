@@ -27,12 +27,34 @@ class MultiRoleMiddleware
     {
         foreach ($roles as $role) {
             $guard = $this->roleToGuard[$role] ?? null;
-            
+
             if ($guard && Auth::guard($guard)->check()) {
                 $user = Auth::guard($guard)->user();
-                $claims = $user->getJWTCustomClaims();
 
-                if (($claims['role'] ?? null) === $role) {
+                // Определяем роль по типу модели
+                $userRole = null;
+                if ($user instanceof \App\Models\GpCompanyManager) {
+                    $userRole = 'manager';
+                } elseif ($user instanceof \App\Models\GpDriver) {
+                    $userRole = 'driver';
+                } elseif ($user instanceof \App\Models\GpAdmin) {
+                    $userRole = 'admin';
+                } elseif ($user instanceof \App\Models\GpOperator) {
+                    $userRole = 'operator';
+                } elseif ($user instanceof \App\Models\GpClient) {
+                    $userRole = 'client';
+                }
+
+                if ($userRole === $role) {
+                    // Проверяем статус is_active для менеджеров и водителей
+                    if (($role === 'manager' || $role === 'driver') && !$user->is_active) {
+                        Auth::guard($guard)->logout();
+                        return response()->json([
+                            'error' => 'Account deactivated',
+                            'message' => 'Ваш аккаунт был деактивирован'
+                        ], 403);
+                    }
+
                     Auth::shouldUse($guard); // Активируем нужный guard
                     return $next($request);
                 }

@@ -20,11 +20,14 @@ class AdminOperatorsController extends Controller
         $this->itemRepository = $itemRepository;
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::guard('api_admin')->user();
 
-        $items = $this->itemRepository->getItemsWithPagination($user->id, 20);
+        // Получаем параметр статуса из запроса
+        $status = $request->get('status');
+
+        $items = $this->itemRepository->getItemsWithPagination($user->id, 20, $status);
 
         return response()->json([
             'items' => $items->items(),
@@ -55,9 +58,11 @@ class AdminOperatorsController extends Controller
             'email' => 'required|email|unique:gp_operators,email',
             'password' => 'required|string',
             'cashier' => 'nullable|boolean',
+            'is_active' => 'nullable|boolean',
         ]);
 
         $validated['cashier'] = (bool) ($validated['cashier'] ?? false);
+        $validated['is_active'] = (bool) ($validated['is_active'] ?? true);
         $created = $this->itemRepository->create($validated);
 
         if (!$created) {
@@ -75,9 +80,11 @@ class AdminOperatorsController extends Controller
             'name' => 'required|string',
             'password' => 'nullable|sometimes|string',
             'cashier' => 'nullable|boolean',
+            'is_active' => 'nullable|boolean',
         ]);
 
         $validated['cashier'] = (bool) ($validated['cashier'] ?? false);
+        $validated['is_active'] = (bool) ($validated['is_active'] ?? true);
 
         $operator = GpOperator::find($id);
 
@@ -173,5 +180,29 @@ class AdminOperatorsController extends Controller
             return response()->json(['error' => 'Error adding operator cash'], 500);
         }
         return response()->json(['message' => 'Operator cash added']);
+    }
+
+    public function getOperatorStatus($operatorId)
+    {
+        $operator = GpOperator::find($operatorId);
+
+        if (!$operator) {
+            return response()->json(['error' => 'Operator not found'], 404);
+        }
+
+        // Проверяем, включена ли смена у оператора
+        $hasShift = $operator->is_active;
+
+        // Определяем статус оператора
+        if ($hasShift) {
+            $status = 'available'; // Зеленый - включена смена
+        } else {
+            $status = 'offline'; // Желтый - не включена смена
+        }
+
+        return response()->json([
+            'status' => $status,
+            'has_shift' => $hasShift
+        ]);
     }
 }

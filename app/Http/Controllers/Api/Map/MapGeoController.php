@@ -123,4 +123,34 @@ class MapGeoController extends Controller
             'message' => 'District updated successfully'
         ], 200);
     }
+
+    public function deleteStreet($id)
+    {
+        $deleted = $this->streetsRepository->delete($id);
+        
+        if (!$deleted) {
+            return response()->json([
+                'message' => 'Street not found or not deleted',
+            ], 404);
+        }
+
+        return response()->json([
+            'message' => 'Street deleted successfully'
+        ], 200);
+    }
+
+    public function deleteDistrict($id)
+    {
+        $deleted = $this->districtsRepository->delete($id);
+        
+        if (!$deleted) {
+            return response()->json([
+                'message' => 'District not found or not deleted',
+            ], 404);
+        }
+
+        return response()->json([
+            'message' => 'District deleted successfully'
+        ], 200);
+    }
 }

@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api\Operator;
 
 use App\Http\Controllers\Controller;
 use App\Models\GpCompany;
+use App\Models\GpCompanyManager;
 use App\Repositories\Admin\CompanyManagerRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class OperatorCompanyManagersController extends Controller
 {
@@ -18,11 +20,18 @@ class OperatorCompanyManagersController extends Controller
         $this->itemRepository = $itemRepository;
     }
 
-    public function index($company_id)
+    public function index($company_id, Request $request)
     {
         $user = Auth::user();
 
-        $items = $this->itemRepository->getItemsWithPagination($user->id, $company_id, 20);
+        // Получаем параметр статуса из запроса
+        $status = $request->get('status');
+
+        Log::info('Company Managers API called with status: ' . $status);
+
+        $items = $this->itemRepository->getItemsWithPagination($user->id, $company_id, 20, $status);
+
+        Log::info('Company Managers API returned ' . count($items->items()) . ' items');
 
         return response()->json([
             'items' => $items->items(),
@@ -67,6 +76,7 @@ class OperatorCompanyManagersController extends Controller
         $validated = $request->validate([
             'name' => 'required|string',
             'password' => 'nullable|sometimes|string',
+            'is_active' => 'nullable|boolean',
         ]);
 
         $updated = $this->itemRepository->update($id, $validated);
@@ -76,5 +86,14 @@ class OperatorCompanyManagersController extends Controller
         }
 
         return response()->json(['message' => 'Manager updated']);
+    }
+
+    public function delete($company_id, $id)
+    {
+        $deleted = $this->itemRepository->delete($id);
+        if (!$deleted) {
+            return response()->json(['error' => 'Manager not found'], 404);
+        }
+        return response()->json(['message' => 'Manager deleted']);
     }
 }

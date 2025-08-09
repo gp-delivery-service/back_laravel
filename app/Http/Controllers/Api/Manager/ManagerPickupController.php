@@ -33,16 +33,24 @@ class ManagerPickupController extends Controller
             'search_id',
             'search_note',
             'search_driver',
+            'driver_id',
             'company_id',
             'date_from',
             'date_to'
         ]);
+
+        // Обрабатываем фильтр по водителю
+        if (!empty($filters['driver_id'])) {
+            // Если передан ID водителя, используем его для точного поиска
+            $filters['driver_id'] = $filters['driver_id'];
+        }
 
         $request->validate([
             'status' => 'nullable|string|in:' . implode(',', array_column(GpPickupStatus::cases(), 'value')),
             'search_id' => 'nullable|string|max:50',
             'search_note' => 'nullable|string|max:255',
             'search_driver' => 'nullable|string|max:255',
+            'driver_id' => 'nullable|string|exists:gp_drivers,id',
             'company_id' => 'nullable|string|exists:gp_companies,id',
             'date_from' => 'nullable|date',
             'date_to' => 'nullable|date|after_or_equal:date_from'
@@ -212,7 +220,12 @@ class ManagerPickupController extends Controller
     public function calls()
     {
         $items = $this->repository->getCallItems();
-
+        try {
+            logger()->info('XNode calls payload built', [
+                'count' => is_iterable($items) ? count($items) : null,
+                'type' => is_object($items) ? get_class($items) : gettype($items),
+            ]);
+        } catch (\Throwable $e) {}
         return response()->json($items);
     }
 

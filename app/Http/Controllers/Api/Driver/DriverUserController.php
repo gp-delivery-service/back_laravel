@@ -106,6 +106,13 @@ class DriverUserController extends Controller
                 ], 404);
             }
 
+            if (!$user->is_active) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Аккаунт деактивирован'
+                ], 403);
+            }
+
             $sms = GpDriverSms::where(['user_id' => $user->id, 'sms' => $request->sms, 'salt' => $request->salt, 'active' => 1])->first();
 
             if (!$sms) {

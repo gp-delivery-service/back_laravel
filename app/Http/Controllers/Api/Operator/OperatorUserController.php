@@ -41,6 +41,13 @@ class OperatorUserController extends Controller
 
         $user = Auth::guard('api_operator')->user();
 
+        if (!$user->is_active) {
+            Auth::guard('api_operator')->logout();
+            throw ValidationException::withMessages([
+                'email' => ['Account is deactivated'],
+            ]);
+        }
+
         // Генерация refresh_token
         $refresh_token = Str::random(64);
         $expires_at = Carbon::now()->addDays(30);

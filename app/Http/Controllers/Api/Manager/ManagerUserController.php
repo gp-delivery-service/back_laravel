@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Api\Manager;
 use App\Http\Controllers\Controller;
 use App\Models\GpCompany;
 use App\Models\GpCompanyManagerRefreshToken;
+use App\Models\GpDriver;
+use App\Models\GpPickup;
+use App\Constants\GpPickupStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -45,6 +48,13 @@ class ManagerUserController extends Controller
         }
 
         $user = Auth::guard('api_manager')->user();
+
+        if (!$user->is_active) {
+            Auth::guard('api_manager')->logout();
+            throw ValidationException::withMessages([
+                'email' => ['Account is deactivated'],
+            ]);
+        }
 
         // Генерация refresh_token
         $refresh_token = Str::random(64);

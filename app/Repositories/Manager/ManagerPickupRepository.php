@@ -31,15 +31,56 @@ class ManagerPickupRepository
     }
 
     // Получение с пагинацией
-    public function getItemsWithPagination($userUuid, $company_id, $perPage = 20)
+    public function getItemsWithPagination($userUuid, $company_id, $perPage = 20, $filters = [])
     {
-        $paginator = GpPickup::select('gp_pickups.id as id')
+        $query = GpPickup::select('gp_pickups.id as id')
             ->when($company_id !== null, function ($query) use ($company_id) {
                 $query->where('gp_pickups.company_id', $company_id);
             })
-            ->where('gp_pickups.archived', false)
-            ->orderBy('created_at', 'desc')
-            ->paginate($perPage);
+            ->where('gp_pickups.archived', false);
+
+        // Применяем фильтры
+        if (!empty($filters['status'])) {
+            $query->where('gp_pickups.status', $filters['status']);
+        }
+
+        if (!empty($filters['search_id'])) {
+            $query->where('gp_pickups.id', 'like', '%' . $filters['search_id'] . '%');
+        }
+
+        if (!empty($filters['search_note'])) {
+            $query->where(function ($q) use ($filters) {
+                $q->where('gp_pickups.note', 'like', '%' . $filters['search_note'] . '%')
+                  ->orWhere('gp_pickups.system_note', 'like', '%' . $filters['search_note'] . '%');
+            });
+        }
+
+        if (!empty($filters['search_driver'])) {
+            $query->whereHas('driver', function ($q) use ($filters) {
+                $q->where('name', 'like', '%' . $filters['search_driver'] . '%')
+                  ->orWhere('phone', 'like', '%' . $filters['search_driver'] . '%')
+                  ->orWhere('car_number', 'like', '%' . $filters['search_driver'] . '%');
+            });
+        }
+
+        if (!empty($filters['driver_id'])) {
+            $query->where('gp_pickups.driver_id', $filters['driver_id']);
+        }
+
+        if (!empty($filters['company_id'])) {
+            $query->where('gp_pickups.company_id', $filters['company_id']);
+        }
+
+        // Фильтр по дате создания
+        if (!empty($filters['date_from'])) {
+            $query->where('gp_pickups.created_at', '>=', $filters['date_from'] . ' 00:00:00');
+        }
+
+        if (!empty($filters['date_to'])) {
+            $query->where('gp_pickups.created_at', '<=', $filters['date_to'] . ' 23:59:59');
+        }
+
+        $paginator = $query->orderBy('created_at', 'desc')->paginate($perPage);
         $items_ids = $paginator->pluck('id')->toArray();
         $items = $this->getItems($items_ids);
         $ordered_items = $items->sortBy(function ($item) use ($items_ids) {
@@ -189,12 +230,32 @@ class ManagerPickupRepository
 
     public function removeOrders(int $pickupId, array $orderIds): GpPickup
     {
+        // Получаем вызов для проверки его статуса
+        $pickup = GpPickup::findOrFail($pickupId);
+
+        // Проверяем, что вызов находится в статусе, когда можно удалять заказы
+        $allowedStatuses = [
+            GpPickupStatus::PREPARING->value,
+            GpPickupStatus::REQUESTED->value,
+        ];
+
+        if (!in_array($pickup->status, $allowedStatuses)) {
+            throw new \Exception('Нельзя удалять заказы из вызова в текущем статусе');
+        }
+
+        // Удаляем заказы
         GpPickupOrder::where('pickup_id', $pickupId)
             ->whereIn('order_id', $orderIds)
             ->whereIn('status', GpPickupOrderStatus::canBeRemovedFromPickup())
             ->delete();
 
-        return GpPickup::findOrFail($pickupId)->refresh();
+        // Проверяем, остались ли заказы в вызове
+        $remainingOrders = GpPickupOrder::where('pickup_id', $pickupId)->count();
+        if ($remainingOrders === 0) {
+            throw new \Exception('Нельзя удалить все заказы из вызова. Вызов должен содержать хотя бы один заказ.');
+        }
+
+        return $pickup->refresh();
     }
 
     public function changeStatus(int $id, array $data): GpPickup

@@ -102,4 +102,20 @@ class DistrictRepository
 
         return true;
     }
+
+    public function delete($id)
+    {
+        $district = GpMapDistrict::find($id);
+        if (!$district) {
+            return false;
+        }
+
+        // Удаляем все гео-точки района
+        GpMapDistrictGeo::where('district_id', $id)->delete();
+        
+        // Удаляем сам район
+        $district->delete();
+
+        return true;
+    }
 }

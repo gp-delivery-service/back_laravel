@@ -57,6 +57,7 @@ Route::middleware(['auth:api_admin', 'role:admin'])->post('/owner/auth/logout', 
 Route::middleware(['auth:api_admin', 'role:admin'])->get('/owner/operators', [AdminOperatorsController::class, 'index']);
 Route::middleware(['auth:api_admin', 'role:admin'])->post('/owner/operators', [AdminOperatorsController::class, 'create']);
 Route::middleware(['auth:api_admin', 'role:admin'])->put('/owner/operators/{id}', [AdminOperatorsController::class, 'update']);
+Route::middleware(['auth:api_admin', 'role:admin'])->get('/owner/operators/{id}/status', [AdminOperatorsController::class, 'getOperatorStatus']);
 // - OPERATOR BALANCE
 Route::middleware(['auth:api_admin', 'role:admin'])->get('/owner/operator-balance/info/{operator_id}', [AdminOperatorsController::class, 'getInfo']);
 Route::middleware(['auth:api_admin', 'role:admin'])->post('/owner/operator-balance/cash-clear', [AdminOperatorsController::class, 'clearCash']);
@@ -79,6 +80,7 @@ Route::middleware(['multi_role:operator,admin'])->get('/operator/drivers', [Oper
 Route::middleware(['multi_role:operator,admin'])->get('/operator/drivers/{id}', [OperatorDriversController::class, 'getInfo']);
 Route::middleware(['multi_role:operator,admin'])->post('/operator/drivers', [OperatorDriversController::class, 'create']);
 Route::middleware(['multi_role:operator,admin'])->put('/operator/drivers/{id}', [OperatorDriversController::class, 'update']);
+Route::middleware(['multi_role:operator,admin'])->delete('/operator/drivers/{id}', [OperatorDriversController::class, 'delete']);
 // - COMPANIES
 Route::middleware(['multi_role:operator,admin'])->get('/operator/companies', [OperatorCompaniesController::class, 'index']);
 Route::middleware(['multi_role:operator,admin,manager'])->get('/operator/companies-short', [OperatorCompaniesController::class, 'shortlist']);
@@ -102,6 +104,7 @@ Route::middleware(['multi_role:operator,admin'])->post('/operator/driver-balance
 Route::middleware(['multi_role:operator,admin'])->get('/operator/company/{company_id}/managers', [OperatorCompanyManagersController::class, 'index']);
 Route::middleware(['multi_role:operator,admin'])->post('/operator/company/{company_id}/managers', [OperatorCompanyManagersController::class, 'create']);
 Route::middleware(['multi_role:operator,admin'])->put('/operator/company/{company_id}/managers/{id}', [OperatorCompanyManagersController::class, 'update']);
+Route::middleware(['multi_role:operator,admin'])->delete('/operator/company/{company_id}/managers/{id}', [OperatorCompanyManagersController::class, 'delete']);
 // - RETURN CASH
 Route::middleware(['auth:api_operator', 'role:operator'])->get('/operator/return-cash/{id}', [OperatorReturnCashController::class, 'getReturnCashCode']);
 
@@ -174,6 +177,7 @@ Route::middleware(['multi_role:operator,admin,manager'])->post('/manager/pickups
 // - COMPANIES
 Route::middleware(['multi_role:admin,manager'])->get('/manager/companies', [ManagerCompanyController::class, 'index']);
 Route::middleware(['multi_role:admin,manager'])->get('/manager/companies/{id}', [ManagerCompanyController::class, 'show']);
+// - DRIVERS
 
 
 // MULTIROLE
@@ -189,10 +193,12 @@ Route::middleware(['multi_role:admin,operator,manager'])->get('/dashboard/compan
 Route::get('/map/streets', [MapGeoController::class, 'streets']);
 Route::post('/map/streets', [MapGeoController::class, 'createStreet']);
 Route::put('/map/streets/{id}', [MapGeoController::class, 'updateStreet']);
+Route::delete('/map/streets/{id}', [MapGeoController::class, 'deleteStreet']);
 // - DISTRICTS
 Route::get('/map/districts', [MapGeoController::class, 'districts']);
 Route::post('/map/districts', [MapGeoController::class, 'createDistrict']);
 Route::put('/map/districts/{id}', [MapGeoController::class, 'updateDistrict']);
+Route::delete('/map/districts/{id}', [MapGeoController::class, 'deleteDistrict']);
 
 
 // - XNODE

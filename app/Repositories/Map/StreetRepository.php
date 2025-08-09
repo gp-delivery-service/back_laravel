@@ -17,9 +17,12 @@ class StreetRepository
         $items = $query->get();
         $ids = $items->pluck('id')->toArray();
         $all_points = $this->getStreetPointsByIds($ids)->toArray();
-        $items->map(function ($item) use ($all_points) {
-            $item->points = $all_points[$item->id] ?? null;
-            return $item;
+        $items = $items->map(function ($item) use ($all_points) {
+            // Преобразуем модель в массив, добавляя поле points,
+            // чтобы избежать предупреждения об undefined property в статическом анализе
+            $itemArray = $item->toArray();
+            $itemArray['points'] = $all_points[$item->id] ?? [];
+            return (object) $itemArray;
         });
         return $items;
     }
@@ -98,6 +101,22 @@ class StreetRepository
         }else{
             return false;
         }
+
+        return true;
+    }
+
+    public function delete($id)
+    {
+        $street = GpMapStreet::find($id);
+        if (!$street) {
+            return false;
+        }
+
+        // Удаляем все гео-точки улицы
+        GpMapStreetGeo::where('street_id', $id)->delete();
+
+        // Удаляем саму улицу
+        $street->delete();
 
         return true;
     }
