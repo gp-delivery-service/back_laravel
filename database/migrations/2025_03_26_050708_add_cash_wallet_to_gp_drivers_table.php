@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('gp_drivers', function (Blueprint $table) {
-            $table->decimal('cash_wallet', 10, 2)->default(0);
-        });
+        if (!Schema::hasColumn('gp_drivers', 'cash_wallet')) {
+            Schema::table('gp_drivers', function (Blueprint $table) {
+                $table->decimal('cash_wallet', 10, 2)->default(0);
+            });
+        }
     }
 
     /**
@@ -21,8 +23,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('gp_drivers', function (Blueprint $table) {
-            $table->dropColumn('cash_wallet');
-        });
+        if (Schema::hasColumn('gp_drivers', 'cash_wallet')) {
+            Schema::table('gp_drivers', function (Blueprint $table) {
+                $table->dropColumn('cash_wallet');
+            });
+        }
     }
 };
