@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Admin\AdminBalanceLogController;
 use App\Http\Controllers\Api\Admin\AdminEntityLogController;
+use App\Http\Controllers\Api\Admin\AdminFundLogController;
 use App\Http\Controllers\Api\Admin\AdminOperatorsController;
 use App\Http\Controllers\Api\Admin\AdminUserController;
 use App\Http\Controllers\Api\App\AppController;
@@ -63,6 +64,14 @@ Route::middleware(['auth:api_admin', 'role:admin'])->get('/owner/operator-balanc
 Route::middleware(['auth:api_admin', 'role:admin'])->post('/owner/operator-balance/cash-clear', [AdminOperatorsController::class, 'clearCash']);
 Route::middleware(['auth:api_admin', 'role:admin'])->post('/owner/operator-balance/cash-add', [AdminOperatorsController::class, 'addCash']);
 // Route::middleware(['auth:api_admin', 'role:admin'])->post('/owner/operator-balance/balance-increase', [OperatorCompanyBalanceController::class, 'balanceIncrease']);
+
+// - ADMIN FUND
+Route::middleware(['auth:api_admin', 'role:admin'])->get('/owner/fund/info', [AdminOperatorsController::class, 'getFundInfo']);
+Route::middleware(['auth:api_admin', 'role:admin'])->get('/owner/fund/balance-check', [AdminOperatorsController::class, 'checkFundBalance']);
+Route::middleware(['auth:api_admin', 'role:admin'])->post('/owner/fund/top-up', [AdminOperatorsController::class, 'topUpFund']);
+Route::middleware(['auth:api_admin', 'role:admin'])->get('/owner/fund/logs', [AdminFundLogController::class, 'index']);
+Route::middleware(['auth:api_admin', 'role:admin'])->get('/owner/fund/logs/operators', [AdminFundLogController::class, 'getOperatorsList']);
+Route::middleware(['auth:api_admin', 'role:admin'])->get('/owner/fund/logs/tags', [AdminFundLogController::class, 'getTagsList']);
 
 // - BALANCE LOGS
 Route::middleware(['multi_role:operator,admin'])->get('/owner/balance-logs', [AdminBalanceLogController::class, 'index']);

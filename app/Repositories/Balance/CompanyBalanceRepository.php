@@ -107,6 +107,81 @@ class CompanyBalanceRepository
             'updated_at' => now(),
         ]);
 
+        // Управление фондом админа согласно новой логике
+        // Только если пополняет админ - списываем с fund_dynamic
+        if ($amount > 0 && $userData['user_type'] === 'App\Models\GpAdmin') {
+            $fundManager = new FundManagerRepository();
+            $fundManager->decreaseFundDynamic($amount, 'credit_balance_increase');
+        } elseif ($amount < 0) {
+            // При закрытии кредита всегда увеличиваем fund_dynamic
+            $fundManager = new FundManagerRepository();
+            $fundManager->increaseFundDynamic(abs($amount), 'credit_balance_close');
+        }
+
+        return $company->refresh();
+    }
+
+    /**
+     * Пополнение кредита компании оператором (списывается только с кассы оператора)
+     */
+    public function addCreditBalanceByOperator($companyId, $amount, $operatorId, $tag = 'operator_credit_balance_increase')
+    {
+        $company = GpCompany::find($companyId);
+        $operator = \App\Models\GpOperator::find($operatorId);
+        
+        if (!$company || !$operator) {
+            return null;
+        }
+
+        // Проверяем, достаточно ли средств в кассе оператора
+        if ($operator->cash < $amount) {
+            throw new \RuntimeException("Недостаточно средств в кассе оператора. Доступно: {$operator->cash}, требуется: {$amount}");
+        }
+
+        $userData = LogHelper::getUserLogData();
+
+        DB::transaction(function () use ($company, $operator, $amount, $tag, $userData) {
+            // Сохраняем старые значения для логов
+            $oldCompanyCreditBalance = $company->credit_balance;
+            $oldOperatorCash = $operator->cash;
+
+            // Увеличиваем credit_balance компании
+            $company->credit_balance += $amount;
+            $company->save();
+
+            // Уменьшаем кассу оператора
+            $operator->cash -= $amount;
+            $operator->save();
+
+            // Логируем изменение credit_balance компании
+            DB::table('gp_company_balance_logs')->insert([
+                'company_id' => $company->id,
+                'amount' => $amount,
+                'old_amount' => $oldCompanyCreditBalance,
+                'new_amount' => $company->credit_balance,
+                'tag' => $tag,
+                'column' => 'credit_balance',
+                'user_id' => $userData['user_id'],
+                'user_type' => $userData['user_type'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            // Логируем изменение кассы оператора
+            DB::table('gp_operator_balance_logs')->insert([
+                'operator_id' => $operator->id,
+                'amount' => -$amount,
+                'old_amount' => $oldOperatorCash,
+                'new_amount' => $operator->cash,
+                'tag' => $tag,
+                'column' => 'cash',
+                'user_id' => $userData['user_id'],
+                'user_type' => $userData['user_type'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        });
+
         return $company->refresh();
     }
 }

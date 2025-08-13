@@ -195,6 +195,10 @@ class DriverTransactionsRepository
                 $servicePart = ($a * ($driverFee / 100));
                 $driverPart = $a - $servicePart;
                 $this->driverBalanceRepository->addEarningPending($driverId, $driverPart, 'order_closed');
+                
+                // Увеличиваем общий заработок админа на комиссию агрегатора
+                $adminFundRepository = new \App\Repositories\Balance\AdminFundRepository();
+                $adminFundRepository->increaseTotalEarn($servicePart, 'order_balance_commission');
             }
             // Если deliverPay == cash, ничего не трогаем, обработан при начале пикапа
 
@@ -240,6 +244,11 @@ class DriverTransactionsRepository
         if ($remaining > 0 && $driver->cash_service > 0) {
             $toClose = min($remaining, $driver->cash_service);
             $this->driverBalanceRepository->addCashService($driverId, -$toClose, 'cash_close');
+            
+            // Увеличиваем общий заработок админа на сумму списания с cash_service
+            $adminFundRepository = new \App\Repositories\Balance\AdminFundRepository();
+            $adminFundRepository->increaseTotalEarn($toClose, 'driver_cash_service_close');
+            
             $remaining -= $toClose;
         }
 

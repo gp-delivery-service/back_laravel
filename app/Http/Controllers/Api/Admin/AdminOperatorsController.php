@@ -144,18 +144,22 @@ class AdminOperatorsController extends Controller
             return response()->json(['error' => 'Operator is not a cashier'], 422);
         }
 
-        if ($operator->cash == 0) {
-            return response()->json(['error' => 'Operator cash is already zero'], 422);
+        if ($operator->cash < $validated['amount']) {
+            return response()->json(['error' => 'Insufficient cash in operator account'], 422);
         }
 
-        $operatorTransactionRepository = new OperatorTransactionsRepository(new OperatorBalanceRepository);
-
-
-        $result = $operatorTransactionRepository->cash_decrease($operator->id, $validated['amount']);
-        if (!$result) {
-            return response()->json(['error' => 'Error clearing operator cash'], 500);
+        try {
+            $adminFundRepository = new \App\Repositories\Balance\AdminFundRepository();
+            $result = $adminFundRepository->closeOperatorCash($operator->id, $validated['amount']);
+            
+            if (!$result) {
+                return response()->json(['error' => 'Error clearing operator cash'], 500);
+            }
+            
+            return response()->json(['message' => 'Operator cash cleared']);
+        } catch (\RuntimeException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
         }
-        return response()->json(['message' => 'Operator cash cleared']);
     }
 
     public function addCash(Request $request)
@@ -181,18 +185,18 @@ class AdminOperatorsController extends Controller
             return response()->json(['error' => 'Operator is not a cashier'], 422);
         }
 
-        if ($operator->cash == 0) {
-            return response()->json(['error' => 'Operator cash is already zero'], 422);
+        try {
+            $adminFundRepository = new \App\Repositories\Balance\AdminFundRepository();
+            $result = $adminFundRepository->addCashToOperator($operator->id, $validated['amount']);
+            
+            if (!$result) {
+                return response()->json(['error' => 'Error adding operator cash'], 500);
+            }
+            
+            return response()->json(['message' => 'Operator cash added']);
+        } catch (\RuntimeException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
         }
-
-        $operatorTransactionRepository = new OperatorTransactionsRepository(new OperatorBalanceRepository);
-
-
-        $result = $operatorTransactionRepository->cash_increase($operator->id, $validated['amount']);
-        if (!$result) {
-            return response()->json(['error' => 'Error adding operator cash'], 500);
-        }
-        return response()->json(['message' => 'Operator cash added']);
     }
 
     public function getOperatorStatus($operatorId)
@@ -217,5 +221,75 @@ class AdminOperatorsController extends Controller
             'status' => $status,
             'has_shift' => $hasShift
         ]);
+    }
+
+    public function getFundInfo()
+    {
+        $user = Auth::guard('api_admin')->user();
+
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $adminFundRepository = new \App\Repositories\Balance\AdminFundRepository();
+        $fundInfo = $adminFundRepository->getFundInfo();
+
+        if (!$fundInfo) {
+            return response()->json(['error' => 'Fund info not found'], 404);
+        }
+
+        return response()->json($fundInfo);
+    }
+
+    public function checkFundBalance()
+    {
+        $user = Auth::guard('api_admin')->user();
+
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $adminFundRepository = new \App\Repositories\Balance\AdminFundRepository();
+        $balanceInfo = $adminFundRepository->checkFundBalance();
+
+        if (!$balanceInfo) {
+            return response()->json(['error' => 'Balance info not found'], 404);
+        }
+
+        return response()->json($balanceInfo);
+    }
+
+    /**
+     * Пополнение общего фонда админа
+     */
+    public function topUpFund(Request $request)
+    {
+        $user = Auth::guard('api_admin')->user();
+
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $validated = $request->validate([
+            'amount' => 'required|numeric|min:0.01',
+            'tag' => 'nullable|string|max:255'
+        ]);
+
+        try {
+            $adminFundRepository = new \App\Repositories\Balance\AdminFundRepository();
+            $result = $adminFundRepository->topUpFund($validated['amount'], $validated['tag'] ?? 'admin_top_up_fund');
+            
+            if (!$result) {
+                return response()->json(['error' => 'Error topping up fund'], 500);
+            }
+            
+            return response()->json([
+                'message' => 'Fund topped up successfully',
+                'new_fund' => $result['fund'],
+                'new_fund_dynamic' => $result['fund_dynamic']
+            ]);
+        } catch (\RuntimeException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
     }
 }
