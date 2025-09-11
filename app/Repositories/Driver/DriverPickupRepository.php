@@ -143,7 +143,7 @@ class DriverPickupRepository
 
         DB::transaction(function () use ($order, $driverId) {
             $driverTransactionRepository = new DriverTransactionsRepository(new DriverBalanceRepository());
-            $r = $driverTransactionRepository->order_as_closed_transaction($order->order_id, $driverId);
+            $r = $driverTransactionRepository->order_as_closed_transaction($order->order_id, $driverId, $order->pickup_id);
             if ($r !== true) {
                 throw ValidationException::withMessages(['order' => 'Error during closing order: ' . $r]);
             }

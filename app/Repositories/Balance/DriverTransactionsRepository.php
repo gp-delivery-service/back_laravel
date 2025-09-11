@@ -125,10 +125,19 @@ class DriverTransactionsRepository
         if ($company->credit_balance >= $sumOrders) {
             $negativeSum = -abs($sumOrders);
             $companyBalanceRepository->addCreditBalance($company->id, $negativeSum, 'picked_up_cash');
+
+            // Увеличиваем fund_dynamic админа при списании credit_balance
+            // УБРАНО: дублирование пополнения фонда, так как addCreditBalance уже увеличивает фонд
+            // $fundManager = new \App\Repositories\Balance\FundManagerRepository();
+            // $fundManager->increaseFundDynamic($sumOrders, 'credit_balance_close', $company->id, $driverId, $pickup->id);
         } else {
             // Иначе добавляем сумму в долг агрегатора
             $positiveSum = abs($sumOrders);
             $companyBalanceRepository->addAgregatorSideBalance($company->id, $positiveSum, 'picked_up_cash');
+
+            // УБРАНО: увеличение fund_dynamic админа при увеличении долга агрегатора
+            // $fundManager = new \App\Repositories\Balance\FundManagerRepository();
+            // $fundManager->increaseFundDynamic($sumOrders, 'aggregator_debt_increase', $company->id, $driverId, $pickup->id);
         }
 
         // Начисляем сумму товаров в cash_goods водителя
@@ -157,7 +166,7 @@ class DriverTransactionsRepository
     }
 
     // Заказ закрыт водителем
-    public function order_as_closed_transaction($orderId, $driverId)
+    public function order_as_closed_transaction($orderId, $driverId, $pickupId = null)
     {
         $driver = GpDriver::find($driverId);
         $order = GpOrder::find($orderId);
@@ -195,10 +204,10 @@ class DriverTransactionsRepository
                 $servicePart = ($a * ($driverFee / 100));
                 $driverPart = $a - $servicePart;
                 $this->driverBalanceRepository->addEarningPending($driverId, $driverPart, 'order_closed');
-                
+
                 // Увеличиваем общий заработок админа на комиссию агрегатора
                 $adminFundRepository = new \App\Repositories\Balance\AdminFundRepository();
-                $adminFundRepository->increaseTotalEarn($servicePart, 'order_balance_commission');
+                $adminFundRepository->increaseTotalEarn($servicePart, 'order_balance_commission', $company->id, $driverId, $pickupId);
             }
             // Если deliverPay == cash, ничего не трогаем, обработан при начале пикапа
 
@@ -212,6 +221,17 @@ class DriverTransactionsRepository
             return true;
         } catch (\Exception $e) {
             return 'Error processing order: ' . $e->getMessage();
+        }
+    }
+
+    public function resetDriverEarning($driverId)
+    {
+        try {
+            $this->driverBalanceRepository->resetEarning($driverId, 'earning_reset');
+            NodeService::callLogsRefresh();
+            return true;
+        } catch (\Exception $e) {
+            return 'Error resetting earning: ' . $e->getMessage();
         }
     }
 
@@ -244,11 +264,11 @@ class DriverTransactionsRepository
         if ($remaining > 0 && $driver->cash_service > 0) {
             $toClose = min($remaining, $driver->cash_service);
             $this->driverBalanceRepository->addCashService($driverId, -$toClose, 'cash_close');
-            
+
             // Увеличиваем общий заработок админа на сумму списания с cash_service
             $adminFundRepository = new \App\Repositories\Balance\AdminFundRepository();
-            $adminFundRepository->increaseTotalEarn($toClose, 'driver_cash_service_close');
-            
+            $adminFundRepository->increaseTotalEarn($toClose, 'driver_cash_service_close', null, $driverId, null);
+
             $remaining -= $toClose;
         }
 

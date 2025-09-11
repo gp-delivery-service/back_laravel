@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\Driver\DriverClientBalanceController;
 use App\Http\Controllers\Api\Driver\DriverReturnCashController;
 use App\Http\Controllers\Api\Driver\DriverUserController;
 use App\Http\Controllers\Api\Driver\DriverWorkController;
+use App\Http\Controllers\Api\Driver\DriverBalanceHistoryController;
 use App\Http\Controllers\Api\Client\ClientUserController;
 use App\Http\Controllers\Api\Client\ClientBalanceController;
 use App\Http\Controllers\Api\Client\ClientOrdersController;
@@ -54,6 +55,7 @@ Route::post('/owner/auth/login', [AdminUserController::class, 'login']);
 Route::post('/owner/auth/refresh', [AdminUserController::class, 'refresh']);
 Route::middleware(['auth:api_admin', 'role:admin'])->get('/owner/auth/user', [AdminUserController::class, 'user']);
 Route::middleware(['auth:api_admin', 'role:admin'])->post('/owner/auth/logout', [AdminUserController::class, 'logout']);
+Route::middleware(['auth:api_admin', 'role:admin'])->post('/owner/auth/change-password', [AdminUserController::class, 'changePassword']);
 // - OPERATORS
 Route::middleware(['auth:api_admin', 'role:admin'])->get('/owner/operators', [AdminOperatorsController::class, 'index']);
 Route::middleware(['auth:api_admin', 'role:admin'])->post('/owner/operators', [AdminOperatorsController::class, 'create']);
@@ -69,9 +71,16 @@ Route::middleware(['auth:api_admin', 'role:admin'])->post('/owner/operator-balan
 Route::middleware(['auth:api_admin', 'role:admin'])->get('/owner/fund/info', [AdminOperatorsController::class, 'getFundInfo']);
 Route::middleware(['auth:api_admin', 'role:admin'])->get('/owner/fund/balance-check', [AdminOperatorsController::class, 'checkFundBalance']);
 Route::middleware(['auth:api_admin', 'role:admin'])->post('/owner/fund/top-up', [AdminOperatorsController::class, 'topUpFund']);
+Route::middleware(['auth:api_admin', 'role:admin'])->post('/owner/fund/withdraw', [AdminOperatorsController::class, 'withdrawFund']);
+Route::middleware(['auth:api_admin', 'role:admin'])->post('/owner/fund/withdraw-total-earn', [AdminOperatorsController::class, 'withdrawTotalEarn']);
 Route::middleware(['auth:api_admin', 'role:admin'])->get('/owner/fund/logs', [AdminFundLogController::class, 'index']);
 Route::middleware(['auth:api_admin', 'role:admin'])->get('/owner/fund/logs/operators', [AdminFundLogController::class, 'getOperatorsList']);
 Route::middleware(['auth:api_admin', 'role:admin'])->get('/owner/fund/logs/tags', [AdminFundLogController::class, 'getTagsList']);
+Route::middleware(['auth:api_admin', 'role:admin'])->get('/owner/fund/logs/companies', [AdminFundLogController::class, 'getCompaniesList']);
+Route::middleware(['auth:api_admin', 'role:admin'])->get('/owner/fund/logs/drivers', [AdminFundLogController::class, 'getDriversList']);
+Route::middleware(['auth:api_admin', 'role:admin'])->get('/owner/fund/logs/pickups', [AdminFundLogController::class, 'getPickupsList']);
+Route::middleware(['auth:api_admin', 'role:admin'])->get('/owner/fund/earnings-chart', [AdminFundLogController::class, 'getEarningsChart']);
+Route::middleware(['auth:api_admin', 'role:admin'])->get('/owner/orders-by-companies-chart', [AdminFundLogController::class, 'getOrdersByCompaniesChart']);
 
 // - BALANCE LOGS
 Route::middleware(['multi_role:operator,admin'])->get('/owner/balance-logs', [AdminBalanceLogController::class, 'index']);
@@ -86,7 +95,7 @@ Route::middleware(['auth:api_operator', 'role:operator'])->get('/operator/auth/u
 Route::middleware(['auth:api_operator', 'role:operator'])->post('/operator/auth/logout', [OperatorUserController::class, 'logout']);
 // - DRIVERS
 Route::middleware(['multi_role:operator,admin'])->get('/operator/drivers', [OperatorDriversController::class, 'index']);
-Route::middleware(['multi_role:operator,admin'])->get('/operator/drivers/{id}', [OperatorDriversController::class, 'getInfo']);
+Route::middleware(['multi_role:operator,admin,manager'])->get('/operator/drivers/{id}', [OperatorDriversController::class, 'getInfo']);
 Route::middleware(['multi_role:operator,admin'])->post('/operator/drivers', [OperatorDriversController::class, 'create']);
 Route::middleware(['multi_role:operator,admin'])->put('/operator/drivers/{id}', [OperatorDriversController::class, 'update']);
 Route::middleware(['multi_role:operator,admin'])->delete('/operator/drivers/{id}', [OperatorDriversController::class, 'delete']);
@@ -95,6 +104,7 @@ Route::middleware(['multi_role:operator,admin'])->get('/operator/companies', [Op
 Route::middleware(['multi_role:operator,admin,manager'])->get('/operator/companies-short', [OperatorCompaniesController::class, 'shortlist']);
 Route::middleware(['multi_role:operator,admin'])->post('/operator/companies', [OperatorCompaniesController::class, 'create']);
 Route::middleware(['multi_role:operator,admin'])->put('/operator/companies/{id}', [OperatorCompaniesController::class, 'update']);
+Route::middleware(['multi_role:operator,admin'])->delete('/operator/companies/{id}', [OperatorCompaniesController::class, 'delete']);
 // - COMPANY BALANCE
 Route::middleware(['multi_role:operator,admin'])->get('/operator/company-balance/info/{company_id}', [OperatorCompanyBalanceController::class, 'getInfo']);
 Route::middleware(['multi_role:operator,admin'])->post('/operator/company-balance/credit-balance-increase', [OperatorCompanyBalanceController::class, 'creditIncrease']);
@@ -123,6 +133,7 @@ Route::middleware(['auth:api_operator', 'role:operator'])->get('/operator/return
 Route::post('/driver/auth/sms', [DriverUserController::class, 'sendCode']);
 Route::post('/driver/auth/login', [DriverUserController::class, 'login']);
 Route::middleware(['auth:api_driver', 'role:driver'])->get('/driver/auth/user', [DriverUserController::class, 'user']);
+Route::middleware(['auth:api_driver', 'role:driver'])->post('/driver/auth/renew-personal-code', [DriverUserController::class, 'renewPersonalCode']);
 // - PICKUPS
 Route::post('/driver/pickups/take', [DriverPickupController::class, 'takePickup']);
 // - WORK
@@ -133,6 +144,7 @@ Route::middleware(['auth:api_driver', 'role:driver'])->get('/driver/work/pickup/
 Route::middleware(['auth:api_driver', 'role:driver'])->put('/driver/work/pickup/{pickupId}/mark_as_picked_up', [DriverWorkController::class, 'pickupPickedUp']);
 Route::middleware(['auth:api_driver', 'role:driver'])->put('/driver/work/pickup/{pickupId}/mark_as_closed', [DriverWorkController::class, 'pickupClose']);
 Route::middleware(['auth:api_driver', 'role:driver'])->put('/driver/work/pickup_order/mark_as_closed', [DriverWorkController::class, 'orderClose']);
+Route::middleware(['auth:api_driver', 'role:driver'])->post('/driver/work/reset-earning', [DriverWorkController::class, 'resetEarning']);
 // - CLIENT BALANCE
 Route::middleware(['auth:api_driver', 'role:driver'])->post('/driver/client-balance/top-up', [DriverClientBalanceController::class, 'topUpClientWallet']);
 Route::middleware(['auth:api_driver', 'role:driver'])->get('/driver/client-balance/info', [DriverClientBalanceController::class, 'getClientInfo']);
@@ -141,6 +153,8 @@ Route::middleware(['auth:api_driver', 'role:driver'])->get('/driver/return-cash/
 Route::middleware(['auth:api_driver', 'role:driver'])->post('/driver/return-cash/amount', [DriverReturnCashController::class, 'getReturnCashAmountWithCode']);
 Route::middleware(['auth:api_driver', 'role:driver'])->post('/driver/return-cash/confirm', [DriverReturnCashController::class, 'confirmReturnCash']);
 Route::middleware(['auth:api_driver', 'role:driver'])->post('/driver/return-cash/reset-earning', [DriverReturnCashController::class, 'resetEarning']);
+// - BALANCE HISTORY
+Route::middleware(['auth:api_driver', 'role:driver'])->get('/driver/balance/history', [DriverBalanceHistoryController::class, 'index']);
 
 
 // CLIENT
@@ -184,8 +198,8 @@ Route::middleware(['multi_role:operator,admin,manager'])->post('/manager/pickups
 Route::middleware(['multi_role:operator,admin,manager'])->post('/manager/pickups/{id}/remove-orders', [ManagerPickupController::class, 'removeOrders']);
 Route::middleware(['multi_role:operator,admin,manager'])->post('/manager/pickups/{id}/status', [ManagerPickupController::class, 'changeStatus']);
 // - COMPANIES
-Route::middleware(['multi_role:admin,manager'])->get('/manager/companies', [ManagerCompanyController::class, 'index']);
-Route::middleware(['multi_role:admin,manager'])->get('/manager/companies/{id}', [ManagerCompanyController::class, 'show']);
+Route::middleware(['multi_role:admin,operator,manager'])->get('/manager/companies', [ManagerCompanyController::class, 'index']);
+Route::middleware(['multi_role:admin,operator,manager'])->get('/manager/companies/{id}', [ManagerCompanyController::class, 'show']);
 // - DRIVERS
 
 
@@ -212,6 +226,9 @@ Route::delete('/map/districts/{id}', [MapGeoController::class, 'deleteDistrict']
 
 // - XNODE
 Route::middleware(['xnode.verify'])->get('/xnode/calls', [ManagerPickupController::class, 'calls']);
+Route::
+    // middleware(['xnode.verify'])->
+    get('/xnode/visibility', [UserController::class, 'manager_visible_drivers']);
 
 
 Route::get('ping', fn() => response()->json(['pong' => true]));

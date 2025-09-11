@@ -13,7 +13,7 @@ class FundManagerRepository
      * Увеличивает fund_dynamic админа (когда списывается credit_balance компании)
      * Вызывается при закрытии заказа, когда списывается credit_balance
      */
-    public function increaseFundDynamic($amount, $tag = 'credit_balance_close')
+    public function increaseFundDynamic($amount, $tag = 'credit_balance_close', $companyId = null, $driverId = null, $pickupId = null)
     {
         $admin = GpAdmin::first();
         
@@ -23,7 +23,7 @@ class FundManagerRepository
 
         $userData = LogHelper::getUserLogData();
 
-        DB::transaction(function () use ($admin, $amount, $tag, $userData) {
+        DB::transaction(function () use ($admin, $amount, $tag, $userData, $companyId, $driverId, $pickupId) {
             // Сохраняем старое значение для логов
             $oldFundDynamic = $admin->fund_dynamic;
 
@@ -42,6 +42,11 @@ class FundManagerRepository
                 'new_fund_dynamic' => $admin->fund_dynamic,
                 'tag' => $tag,
                 'operator_id' => ($userData['user_type'] === 'App\Models\GpOperator') ? $userData['user_id'] : null,
+                'company_id' => $companyId,
+                'driver_id' => $driverId,
+                'pickup_id' => $pickupId,
+                'old_total_earn' => null,
+                'new_total_earn' => null,
                 'user_id' => $logUserId,
                 'user_type' => $userData['user_type'],
                 'created_at' => now(),
@@ -59,7 +64,7 @@ class FundManagerRepository
      * Уменьшает fund_dynamic админа (когда пополняется credit_balance компании)
      * Вызывается при пополнении credit_balance админом
      */
-    public function decreaseFundDynamic($amount, $tag = 'credit_balance_increase')
+    public function decreaseFundDynamic($amount, $tag = 'credit_balance_increase', $companyId = null, $driverId = null, $pickupId = null)
     {
         $admin = GpAdmin::first();
         
@@ -74,7 +79,7 @@ class FundManagerRepository
 
         $userData = LogHelper::getUserLogData();
 
-        DB::transaction(function () use ($admin, $amount, $tag, $userData) {
+        DB::transaction(function () use ($admin, $amount, $tag, $userData, $companyId, $driverId, $pickupId) {
             // Сохраняем старое значение для логов
             $oldFundDynamic = $admin->fund_dynamic;
 
@@ -93,6 +98,11 @@ class FundManagerRepository
                 'new_fund_dynamic' => $admin->fund_dynamic,
                 'tag' => $tag,
                 'operator_id' => ($userData['user_type'] === 'App\Models\GpOperator') ? $userData['user_id'] : null,
+                'company_id' => $companyId,
+                'driver_id' => $driverId,
+                'pickup_id' => $pickupId,
+                'old_total_earn' => null,
+                'new_total_earn' => null,
                 'user_id' => $logUserId,
                 'user_type' => $userData['user_type'],
                 'created_at' => now(),
@@ -117,6 +127,9 @@ class FundManagerRepository
             return null;
         }
 
+        // Получаем сумму всех credit_balance компаний
+        $companiesCreditBalance = GpCompany::sum('credit_balance');
+
         return [
             'fund' => $admin->fund,
             'fund_dynamic' => $admin->fund_dynamic,
@@ -124,6 +137,7 @@ class FundManagerRepository
             'total_earn' => $admin->total_earn,
             'is_balanced' => $admin->isFundBalanced(),
             'difference' => $admin->getFundDifference(),
+            'companies_credit_balance' => $companiesCreditBalance,
         ];
     }
 }

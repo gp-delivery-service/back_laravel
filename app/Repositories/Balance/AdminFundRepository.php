@@ -50,6 +50,11 @@ class AdminFundRepository
                 'new_fund_dynamic' => $admin->fund_dynamic,
                 'tag' => $tag,
                 'operator_id' => $operator->id,
+                'company_id' => null,
+                'driver_id' => null,
+                'pickup_id' => null,
+                'old_total_earn' => null,
+                'new_total_earn' => null,
                 'user_id' => $logUserId,
                 'user_type' => $userData['user_type'],
                 'created_at' => now(),
@@ -94,34 +99,18 @@ class AdminFundRepository
         $userData = LogHelper::getUserLogData();
 
         DB::transaction(function () use ($operator, $admin, $amount, $tag, $userData) {
-            // Увеличиваем fund_dynamic админа
-            $oldFundDynamic = $admin->fund_dynamic;
-            $admin->fund_dynamic += $amount;
-            $admin->save();
+            // УБРАНО: увеличение fund_dynamic админа при закрытии кассы оператора
+            // $oldFundDynamic = $admin->fund_dynamic;
+            // $admin->fund_dynamic += $amount;
+            // $admin->save();
 
             // Уменьшаем кассу оператора
             $oldOperatorCash = $operator->cash;
             $operator->cash -= $amount;
             $operator->save();
 
-            // Логируем изменение фонда админа
-            // user_id должен быть ID админа, так как внешний ключ ссылается на gp_admins
-            $logUserId = ($userData['user_type'] === 'App\Models\GpAdmin') ? $userData['user_id'] : null;
-
-            DB::table('gp_admin_fund_logs')->insert([
-                'admin_id' => $admin->id,
-                'amount' => $amount,
-                'old_fund_dynamic' => $oldFundDynamic,
-                'new_fund_dynamic' => $admin->fund_dynamic,
-                'tag' => $tag,
-                'operator_id' => $operator->id,
-                'user_id' => $logUserId,
-                'user_type' => $userData['user_type'],
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            // Логируем изменение кассы оператора
+            // УБРАНО: логирование изменения фонда админа
+            // Логируем только изменение кассы оператора
             DB::table('gp_operator_balance_logs')->insert([
                 'operator_id' => $operator->id,
                 'amount' => -$amount,
@@ -206,6 +195,11 @@ class AdminFundRepository
                 'new_fund_dynamic' => $admin->fund_dynamic,
                 'tag' => $tag,
                 'operator_id' => null,
+                'company_id' => null,
+                'driver_id' => null,
+                'pickup_id' => null,
+                'old_total_earn' => null,
+                'new_total_earn' => null,
                 'user_id' => $logUserId,
                 'user_type' => $userData['user_type'],
                 'created_at' => now(),
@@ -220,11 +214,129 @@ class AdminFundRepository
     }
 
     /**
+     * Снятие с общего фонда админа
+     * Уменьшает как статичный фонд (fund), так и динамичный (fund_dynamic)
+     */
+    public function withdrawFund($amount, $tag = 'admin_withdraw_fund')
+    {
+        $admin = GpAdmin::first();
+
+        if (!$admin) {
+            return null;
+        }
+
+        // Проверяем, достаточно ли средств в fund_dynamic
+        if ($admin->fund_dynamic < $amount) {
+            throw new \RuntimeException("Недостаточно средств в фонде. Доступно: {$admin->fund_dynamic}, требуется: {$amount}");
+        }
+
+        $userData = LogHelper::getUserLogData();
+
+        DB::transaction(function () use ($admin, $amount, $tag, $userData) {
+            // Сохраняем старые значения для логов
+            $oldFund = $admin->fund;
+            $oldFundDynamic = $admin->fund_dynamic;
+
+            // Уменьшаем статичный фонд
+            $admin->fund -= $amount;
+            
+            // Уменьшаем динамичный фонд
+            $admin->fund_dynamic -= $amount;
+            
+            $admin->save();
+
+            // Логируем изменение фонда админа
+            // user_id должен быть ID админа, так как внешний ключ ссылается на gp_admins
+            $logUserId = ($userData['user_type'] === 'App\Models\GpAdmin') ? $userData['user_id'] : null;
+
+            DB::table('gp_admin_fund_logs')->insert([
+                'admin_id' => $admin->id,
+                'amount' => -$amount,
+                'old_fund_dynamic' => $oldFundDynamic,
+                'new_fund_dynamic' => $admin->fund_dynamic,
+                'tag' => $tag,
+                'operator_id' => null,
+                'company_id' => null,
+                'driver_id' => null,
+                'pickup_id' => null,
+                'old_total_earn' => null,
+                'new_total_earn' => null,
+                'user_id' => $logUserId,
+                'user_type' => $userData['user_type'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        });
+
+        return [
+            'fund' => $admin->fund,
+            'fund_dynamic' => $admin->fund_dynamic
+        ];
+    }
+
+    /**
+     * Снятие с общего заработка админа
+     * Уменьшает только total_earn
+     */
+    public function withdrawTotalEarn($amount, $tag = 'admin_withdraw_total_earn')
+    {
+        $admin = GpAdmin::first();
+
+        if (!$admin) {
+            return null;
+        }
+
+        // Проверяем, достаточно ли средств в total_earn
+        if ($admin->total_earn < $amount) {
+            throw new \RuntimeException("Недостаточно средств в общем заработке. Доступно: {$admin->total_earn}, требуется: {$amount}");
+        }
+
+        $userData = LogHelper::getUserLogData();
+
+        DB::transaction(function () use ($admin, $amount, $tag, $userData) {
+            // Сохраняем старое значение для логов
+            $oldTotalEarn = $admin->total_earn;
+
+            // Уменьшаем общий заработок админа
+            $admin->total_earn -= $amount;
+            $admin->save();
+
+            // Логируем изменение общего заработка админа
+            // user_id должен быть ID админа, так как внешний ключ ссылается на gp_admins
+            $logUserId = ($userData['user_type'] === 'App\Models\GpAdmin') ? $userData['user_id'] : null;
+
+            DB::table('gp_admin_fund_logs')->insert([
+                'admin_id' => $admin->id,
+                'amount' => -$amount,
+                'old_fund_dynamic' => $admin->fund_dynamic, // Используем fund_dynamic для совместимости
+                'new_fund_dynamic' => $admin->fund_dynamic, // Не изменяется
+                'old_total_earn' => $oldTotalEarn,
+                'new_total_earn' => $admin->total_earn,
+                'tag' => $tag,
+                'operator_id' => null,
+                'company_id' => null,
+                'driver_id' => null,
+                'pickup_id' => null,
+                'user_id' => $logUserId,
+                'user_type' => $userData['user_type'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        });
+
+        return [
+            'fund' => $admin->fund,
+            'fund_dynamic' => $admin->fund_dynamic,
+            'total_earn' => $admin->total_earn
+        ];
+    }
+
+    /**
      * Увеличивает общий заработок админа
      * Вызывается при закрытии кассы водителя (списание с cash_service) 
      * и при закрытии заказа с оплатой с баланса (комиссия агрегатора)
      */
-    public function increaseTotalEarn($amount, $tag = 'total_earn_increase')
+    public function increaseTotalEarn($amount, $tag = 'total_earn_increase', $companyId = null, $driverId = null, $pickupId = null)
     {
         $admin = GpAdmin::first();
 
@@ -234,7 +346,7 @@ class AdminFundRepository
 
         $userData = LogHelper::getUserLogData();
 
-        DB::transaction(function () use ($admin, $amount, $tag, $userData) {
+        DB::transaction(function () use ($admin, $amount, $tag, $userData, $companyId, $driverId, $pickupId) {
             // Сохраняем старое значение для логов
             $oldTotalEarn = $admin->total_earn;
 
@@ -251,8 +363,13 @@ class AdminFundRepository
                 'amount' => $amount,
                 'old_fund_dynamic' => $admin->fund_dynamic, // Используем fund_dynamic для совместимости
                 'new_fund_dynamic' => $admin->fund_dynamic, // Не изменяется
+                'old_total_earn' => $oldTotalEarn,
+                'new_total_earn' => $admin->total_earn,
                 'tag' => $tag,
                 'operator_id' => ($userData['user_type'] === 'App\Models\GpOperator') ? $userData['user_id'] : null,
+                'company_id' => $companyId,
+                'driver_id' => $driverId,
+                'pickup_id' => $pickupId,
                 'user_id' => $logUserId,
                 'user_type' => $userData['user_type'],
                 'created_at' => now(),

@@ -49,6 +49,13 @@ class NodeService
         return self::sendRequestWithRetry($url, array());
     }
 
+    public static function callVisibilityUpdate(): array
+    {
+        $url = rtrim(config('services.node.http_url'), '/') . '/visibility/update';
+
+        return self::sendRequestWithRetry($url, array());
+    }
+
     public static function sendSmsCode(String $code, string $phone): array
     {
         $url = rtrim(config('services.node.http_url'), '/') . '/sms/send/code';

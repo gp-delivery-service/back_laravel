@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Operator;
 
 use App\Http\Controllers\Controller;
+use App\Models\GpDriver;
 use App\Repositories\Admin\DriverRepository;
 use App\Repositories\Balance\DriverTransactionsRepository;
 use App\Repositories\Balance\OperatorTransactionsRepository;
@@ -84,10 +85,24 @@ class OperatorDriverBalanceController extends Controller
         $validated = $request->validate([
             'driver_id' => 'required|string|exists:gp_drivers,id',
             'amount' => 'required|numeric|min:0',
+            'personal_code' => 'required|string|size:6',
         ]);
         if (!$user) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
+
+        // Получаем водителя и проверяем код
+        
+        $driver = GpDriver::find($validated['driver_id']);
+        
+        if (!$driver) {
+            return response()->json(['error' => 'Driver not found'], 404);
+        }
+
+        if ($driver->personal_code !== $validated['personal_code']) {
+            return response()->json(['error' => 'Неверный код подтверждения: ' . $validated['personal_code'] . ' != ' . $driver->personal_code ], 422);
+        }
+
         try {
             $result = $this->repository->cash_close($validated['driver_id'], $validated['amount']);
 
@@ -101,6 +116,11 @@ class OperatorDriverBalanceController extends Controller
             if ($role === 'operator') {
                 $this->operatorTransactionRepository->cash_increase($user->id, $validated['amount']);
             }
+
+            // Сбрасываем код подтверждения после успешной операции
+            $driver->personal_code = null;
+            $driver->save();
+
             return response()->json([
                 'message' => 'Cash closed successfully',
             ]);

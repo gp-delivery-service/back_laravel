@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use App\Constants\GpPickupStatus;
 use App\Models\GpSettings;
 use Illuminate\Validation\ValidationException;
+use App\Models\GpCompanyManager;
 
 class ManagerPickupRepository
 {
@@ -103,6 +104,47 @@ class ManagerPickupRepository
         $items = $this->getItems($items_ids);
         return $items;
     }
+
+    // Убираем метод getDriverManagerConnections, так как он больше не нужен
+    // public function getDriverManagerConnections()
+    // {
+    //     // Получаем все активные пикапы с водителями (статус не closed)
+    //     $activePickups = GpPickup::select('gp_pickups.driver_id', 'gp_pickups.company_id')
+    //         ->whereNotNull('gp_pickups.driver_id')
+    //         ->where('gp_pickups.status', '!=', 'closed')
+    //         ->where('gp_pickups.archived', false)
+    //         ->get();
+    //
+    //     // Получаем всех активных менеджеров
+    //     $managers = GpCompanyManager::select('gp_company_managers.id', 'gp_company_managers.company_id')
+    //         ->where('gp_company_managers.is_active', true)
+    //         ->get();
+    //
+    //     // Группируем менеджеров по компаниям
+    //     $managersByCompany = $managers->groupBy('company_id');
+    //
+    //     // Создаем связи водитель -> список менеджеров
+    //     $connections = [];
+    //     foreach ($activePickups as $pickup) {
+    //         $driverId = $pickup->driver_id;
+    //         $companyId = $pickup->company_id;
+    //
+    //         if (!isset($connections[$driverId])) {
+    //             $connections[$driverId] = [];
+    //         }
+    //
+    //         // Добавляем менеджеров этой компании к водителю
+    //         if (isset($managersByCompany[$companyId])) {
+    //             foreach ($managersByCompany[$companyId] as $manager) {
+    //                 if (!in_array($manager->id, $connections[$driverId])) {
+    //                     $connections[$driverId][] = $manager->id;
+    //                 }
+    //             }
+    //         }
+    //     }
+    //
+    //     return $connections;
+    // }
 
 
     public function create(array $data): GpPickup
@@ -199,10 +241,25 @@ class ManagerPickupRepository
     {
         $pickup = GpPickup::findOrFail($pickupId);
 
+        logger()->info('🚗 Водитель назначается на заказ', [
+            'pickup_id' => $pickupId,
+            'driver_id' => $driverId,
+            'company_id' => $pickup->company_id,
+            'old_status' => $pickup->status->value,
+            'new_status' => GpPickupStatus::DRIVER_FOUND->value
+        ]);
 
         $pickup->driver_id = $driverId;
         $pickup->status = GpPickupStatus::DRIVER_FOUND->value;
         $pickup->save();
+
+        logger()->info('✅ Водитель успешно назначен на заказ', [
+            'pickup_id' => $pickupId,
+            'driver_id' => $driverId,
+            'company_id' => $pickup->company_id,
+            'status' => $pickup->status->value
+        ]);
+
         return true;
     }
 
@@ -311,6 +368,27 @@ class ManagerPickupRepository
             $item->orders = $all_orders[$item->id] ?? null;
             return $item;
         });
+
+        return $items;
+    }
+
+    private function getManagerItems(array $ids = [])
+    {
+        $query = GpCompanyManager::query();
+        $query->whereIn('gp_company_managers.id', $ids);
+        $query->leftJoin('gp_companies', 'gp_company_managers.company_id', '=', 'gp_companies.id');
+        $query->select(
+            'gp_company_managers.id as id',
+            'gp_company_managers.name as name',
+            'gp_company_managers.email as email',
+            'gp_company_managers.is_active as is_active',
+            'gp_company_managers.created_at as created_at',
+            'gp_company_managers.updated_at as updated_at',
+            //
+            'gp_company_managers.company_id as company_id',
+            'gp_companies.name as company_name',
+        );
+        $items = $query->get();
 
         return $items;
     }

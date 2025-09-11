@@ -212,6 +212,7 @@ class DriverBalanceRepository
         return $driver->refresh();
     }
 
+
     public function addEarningPending($driverId, $amount, $tag)
     {
         $driver = GpDriver::find($driverId);

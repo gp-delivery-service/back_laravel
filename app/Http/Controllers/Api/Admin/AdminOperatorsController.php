@@ -292,4 +292,73 @@ class AdminOperatorsController extends Controller
             return response()->json(['error' => $e->getMessage()], 422);
         }
     }
+
+    /**
+     * Снятие с общего фонда админа
+     */
+    public function withdrawFund(Request $request)
+    {
+        $user = Auth::guard('api_admin')->user();
+
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $validated = $request->validate([
+            'amount' => 'required|numeric|min:0.01',
+            'tag' => 'nullable|string|max:255'
+        ]);
+
+        try {
+            $adminFundRepository = new \App\Repositories\Balance\AdminFundRepository();
+            $result = $adminFundRepository->withdrawFund($validated['amount'], $validated['tag'] ?? 'admin_withdraw_fund');
+            
+            if (!$result) {
+                return response()->json(['error' => 'Error withdrawing from fund'], 500);
+            }
+            
+            return response()->json([
+                'message' => 'Fund withdrawn successfully',
+                'new_fund' => $result['fund'],
+                'new_fund_dynamic' => $result['fund_dynamic']
+            ]);
+        } catch (\RuntimeException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
+     * Снятие с общего заработка админа
+     */
+    public function withdrawTotalEarn(Request $request)
+    {
+        $user = Auth::guard('api_admin')->user();
+
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $validated = $request->validate([
+            'amount' => 'required|numeric|min:0.01',
+            'tag' => 'nullable|string|max:255'
+        ]);
+
+        try {
+            $adminFundRepository = new \App\Repositories\Balance\AdminFundRepository();
+            $result = $adminFundRepository->withdrawTotalEarn($validated['amount'], $validated['tag'] ?? 'admin_withdraw_total_earn');
+            
+            if (!$result) {
+                return response()->json(['error' => 'Error withdrawing from total earn'], 500);
+            }
+            
+            return response()->json([
+                'message' => 'Total earn withdrawn successfully',
+                'new_fund' => $result['fund'],
+                'new_fund_dynamic' => $result['fund_dynamic'],
+                'new_total_earn' => $result['total_earn']
+            ]);
+        } catch (\RuntimeException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+    }
 }

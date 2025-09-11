@@ -14,7 +14,7 @@ class GpDriver extends Model implements JWTSubject, AuthenticatableInterface
 {
     use HasFactory, Authenticatable;
 
-    protected $fillable = ['name', 'phone', 'car_name', 'car_number', 'image', 'balance', 'cash_client', 'cash_service', 'cash_goods', 'cash_company_balance', 'earning', 'earning_pending', 'cash_wallet', 'is_active'];
+    protected $fillable = ['name', 'phone', 'car_name', 'car_number', 'image', 'balance', 'cash_client', 'cash_service', 'cash_goods', 'cash_company_balance', 'earning', 'earning_pending', 'cash_wallet', 'is_active', 'personal_code'];
     protected $appends = ['total_cash'];
     public $incrementing = false;
     protected $keyType = 'string';

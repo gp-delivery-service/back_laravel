@@ -88,34 +88,39 @@ class CompanyBalanceRepository
         $column = 'credit_balance';
         $userData = LogHelper::getUserLogData();
 
-        DB::table('gp_companies')
-            ->where('id', $companyId)
-            ->increment('credit_balance', $amount);
-
-        $newAmount = GpCompany::find($companyId)->credit_balance;
-
-        DB::table('gp_company_balance_logs')->insert([
-            'company_id' => $companyId,
-            'amount' => $amount,
-            'old_amount' => $oldAmount,
-            'new_amount' => $newAmount,
-            'tag' => $tag,
-            'column' => $column,
-            'user_id' => $userData['user_id'],
-            'user_type' => $userData['user_type'],
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
         // Управление фондом админа согласно новой логике
-        // Только если пополняет админ - списываем с fund_dynamic
+        // Только если пополняет админ - проверяем и списываем с fund_dynamic ДО записи кредита
         if ($amount > 0 && $userData['user_type'] === 'App\Models\GpAdmin') {
             $fundManager = new FundManagerRepository();
-            $fundManager->decreaseFundDynamic($amount, 'credit_balance_increase');
-        } elseif ($amount < 0) {
-            // При закрытии кредита всегда увеличиваем fund_dynamic
+            // Проверяем достаточность средств в фонде ДО записи кредита
+            $fundManager->decreaseFundDynamic($amount, 'credit_balance_increase', $companyId, null, null);
+        }
+
+        DB::transaction(function () use ($companyId, $amount, $tag, $oldAmount, $column, $userData) {
+            DB::table('gp_companies')
+                ->where('id', $companyId)
+                ->increment('credit_balance', $amount);
+
+            $newAmount = GpCompany::find($companyId)->credit_balance;
+
+            DB::table('gp_company_balance_logs')->insert([
+                'company_id' => $companyId,
+                'amount' => $amount,
+                'old_amount' => $oldAmount,
+                'new_amount' => $newAmount,
+                'tag' => $tag,
+                'column' => $column,
+                'user_id' => $userData['user_id'],
+                'user_type' => $userData['user_type'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        });
+
+        // При закрытии кредита всегда увеличиваем fund_dynamic (после записи)
+        if ($amount < 0) {
             $fundManager = new FundManagerRepository();
-            $fundManager->increaseFundDynamic(abs($amount), 'credit_balance_close');
+            $fundManager->increaseFundDynamic(abs($amount), 'credit_balance_close', $companyId, null, null);
         }
 
         return $company->refresh();

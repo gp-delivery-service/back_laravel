@@ -226,6 +226,7 @@ class ManagerOrderController extends Controller
 
         // Дополнительно: вызвать обновление ноды
         NodeService::callServiceRefresh();
+        NodeService::callVisibilityUpdate();
 
         return response()->json([
             'message' => 'Заказ, пикап и поиск водителя успешно запущены',

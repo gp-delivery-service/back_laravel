@@ -40,20 +40,30 @@ class OperatorCompanyBalanceController extends Controller
             'amount' => 'required|numeric|min:0',
         ]);
 
-        $this->repository->credit_increase($validated['company_id'], $validated['amount']);
+        try {
+            $this->repository->credit_increase($validated['company_id'], $validated['amount']);
 
-        $user = Auth::user();
-        $guard = Auth::getDefaultDriver();
-        $role = $this->guardToRole[$guard] ?? 'unknown';
+            $user = Auth::user();
+            $guard = Auth::getDefaultDriver();
+            $role = $this->guardToRole[$guard] ?? 'unknown';
 
-        $operatorTransactionRepository = new OperatorTransactionsRepository(new OperatorBalanceRepository());
-        if ($role === 'operator') {
-            $operatorTransactionRepository->cash_decrease($user->id, $validated['amount']);
+            $operatorTransactionRepository = new OperatorTransactionsRepository(new OperatorBalanceRepository());
+            if ($role === 'operator') {
+                $operatorTransactionRepository->cash_decrease($user->id, $validated['amount']);
+            }
+
+            return response()->json([
+                'message' => 'Credit increased successfully',
+            ]);
+        } catch (\RuntimeException $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'An error occurred while increasing credit',
+            ], 500);
         }
-
-        return response()->json([
-            'message' => 'Credit increased successfully',
-        ]);
     }
 
     public function balanceIncrease(Request $request)
@@ -63,19 +73,29 @@ class OperatorCompanyBalanceController extends Controller
             'amount' => 'required|numeric|min:0',
         ]);
 
-        $user = Auth::user();
-        $guard = Auth::getDefaultDriver();
-        $role = $this->guardToRole[$guard] ?? 'unknown';
+        try {
+            $user = Auth::user();
+            $guard = Auth::getDefaultDriver();
+            $role = $this->guardToRole[$guard] ?? 'unknown';
 
-        $this->repository->balance_increase_cash($validated['company_id'], $validated['amount']);
-        $operatorTransactionRepository = new OperatorTransactionsRepository(new OperatorBalanceRepository());
-        if ($role === 'operator') {
-            $operatorTransactionRepository->cash_increase($user->id, $validated['amount']);
+            $this->repository->balance_increase_cash($validated['company_id'], $validated['amount']);
+            $operatorTransactionRepository = new OperatorTransactionsRepository(new OperatorBalanceRepository());
+            if ($role === 'operator') {
+                $operatorTransactionRepository->cash_increase($user->id, $validated['amount']);
+            }
+
+            return response()->json([
+                'message' => 'Balance increased successfully',
+            ]);
+        } catch (\RuntimeException $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'An error occurred while increasing balance',
+            ], 500);
         }
-
-        return response()->json([
-            'message' => 'Balance increased successfully',
-        ]);
     }
 
     public function show($id)

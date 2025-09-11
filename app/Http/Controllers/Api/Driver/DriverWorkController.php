@@ -7,6 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Models\GpPickup;
 use App\Models\GpPickupOrder;
 use App\Repositories\Admin\OrderRepository;
+use App\Repositories\Balance\DriverBalanceRepository;
+use App\Repositories\Balance\DriverTransactionsRepository;
 use App\Repositories\Driver\DriverPickupRepository;
 use App\Services\NodeService;
 use Illuminate\Http\Request;
@@ -111,12 +113,10 @@ class DriverWorkController extends Controller
             $updated_pickup =  $this->repository->markPickupAsPickedUp($pickupId, $user->id);
             $this->orderRepository->setPickupOrdersAccepted($pickupId);
             NodeService::callPickupsRefresh();
+            NodeService::callVisibilityUpdate();
             return response()->json($updated_pickup);
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error marking pickup as picked up: ' . $e->getMessage(),
-                'status' => false,
-            ], 500);
+            return response()->json(['error' => 'Error marking pickup as picked up'], 500);
         }
     }
 
@@ -144,12 +144,10 @@ class DriverWorkController extends Controller
         try {
             $updated_pickup =  $this->repository->markPickupAsClosed($pickup->id, $user->id);
             NodeService::callPickupsRefresh();
+            NodeService::callVisibilityUpdate();
             return response()->json($updated_pickup);
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error marking pickup as picked up: ' . $e->getMessage(),
-                'status' => false,
-            ], 500);
+            return response()->json(['error' => 'Error marking pickup as closed'], 500);
         }
 
         return response()->json($pickup);
@@ -192,6 +190,7 @@ class DriverWorkController extends Controller
 
         $pickup = $this->repository->makeOrderAsClosed($pickupOrder->id, $user->id);
         NodeService::callPickupsRefresh();
+        NodeService::callVisibilityUpdate();
 
         return response()->json($pickup);
     }
@@ -235,12 +234,25 @@ class DriverWorkController extends Controller
         try {
             $pickup = $this->repository->setOrderWaitingClient($pickupOrder->id, $user->id);
             NodeService::callPickupsRefresh();
+            NodeService::callVisibilityUpdate();
             return response()->json($pickup);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Error setting order as waiting client: ' . $e->getMessage(),
                 'status' => false,
             ], 500);
+        }
+    }
+
+    public function resetEarning()
+    {
+        $user = Auth::guard('api_driver')->user();
+        $driverTransactionsRepository = new DriverTransactionsRepository(new DriverBalanceRepository());
+        $result = $driverTransactionsRepository->resetDriverEarning($user->id);
+        if ($result === true) {
+            return response()->json(['message' => 'Earning reset successfully'], 200);
+        } else {
+            return response()->json(['message' => 'Error resetting earning: ' . $result], 500);
         }
     }
 }

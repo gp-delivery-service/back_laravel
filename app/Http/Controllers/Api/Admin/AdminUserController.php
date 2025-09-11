@@ -55,6 +55,33 @@ class AdminUserController extends Controller
         ]);
     }
 
+    public function changePassword(Request $request)
+    {
+        $request->validate([
+            'old_password' => 'required|string',
+            'new_password' => 'required|string|min:6',
+        ]);
+
+        $user = Auth::guard('api_admin')->user();
+
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        // Проверяем старый пароль
+        if (!password_verify($request->old_password, $user->password)) {
+            return response()->json(['error' => 'Неверный текущий пароль'], 422);
+        }
+
+        // Обновляем пароль
+        $user->password = bcrypt($request->new_password);
+        $user->save();
+
+        return response()->json([
+            'message' => 'Пароль успешно изменен'
+        ]);
+    }
+
     public function refresh(Request $request)
     {
         $request->validate([

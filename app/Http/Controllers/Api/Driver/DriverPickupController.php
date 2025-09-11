@@ -50,6 +50,7 @@ class DriverPickupController extends Controller
         }
 
         NodeService::callPickupsRefresh();
+        NodeService::callVisibilityUpdate();
 
         return response()->json([
             'status' => true,

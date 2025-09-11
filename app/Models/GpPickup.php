@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Constants\GpPickupStatus;
 use App\Helpers\LogHelper;
+use App\Services\NodeService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -57,16 +58,16 @@ class GpPickup extends Model
             foreach ($fieldsToLog as $field) {
                 if ($model->isDirty($field)) {
                     DB::table('gp_pickup_logs')->insert([
-                        'pickup_id'   => $model->id,
-                        'field'       => $field,
-                        'old_value'   => $model->getOriginal($field),
-                        'new_value'   => $model->$field,
-                        'user_id'     => $userData['user_id'],
-                        'user_type'   => $userData['user_type'],
-                        'created_at'  => now()->timestamp,
+                        'pickup_id' => $model->id,
+                        'field' => $field,
+                        'old_value' => $model->getOriginal($field),
+                        'new_value' => $model->$field,
+                        'user_id' => $userData['user_id'],
+                        'user_type' => $userData['user_type'],
+                        'created_at' => now()->timestamp,
                     ]);
                 }
             }
-        });
+        });        
     }
 }

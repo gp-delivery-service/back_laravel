@@ -160,4 +160,32 @@ class DriverUserController extends Controller
             ], 500);
         }
     }
+
+    public function renewPersonalCode(Request $request)
+    {
+        $user = Auth::guard('api_driver')->user();
+        
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 401);
+        }
+
+        // Генерируем новый 6-значный код
+        $personalCode = str_pad(random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
+        
+        // Сохраняем код водителю
+        $user->personal_code = $personalCode;
+        $user->save();
+
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Код подтверждения обновлен',
+            'data' => [
+                'personal_code' => $personalCode
+            ]
+        ]);
+    }
 }

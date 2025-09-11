@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\GpCompany;
 use App\Models\GpCompanyManager;
 use App\Repositories\Admin\CompanyManagerRepository;
+use App\Services\NodeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -60,40 +61,53 @@ class OperatorCompanyManagersController extends Controller
 
         $validated['company_id'] = $company_id;
 
-        $created = $this->itemRepository->create($validated);
+        try {
+            $created = $this->itemRepository->create($validated);
 
-        if (!$created) {
+            if (!$created) {
+                return response()->json(['error' => 'Error creating manager'], 500);
+            }
+
+            return response()->json(['message' => 'Manager created']);
+        } catch (\Exception $e) {
             return response()->json(['error' => 'Error creating manager'], 500);
         }
-
-        return response()->json(['message' => 'Manager created']);
     }
 
-    public function update($company_id, $id, Request $request)
+    public function update(Request $request, $id)
     {
-        $user = Auth::user();
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:gp_company_managers,email,' . $id,
+                'company_id' => 'required|exists:gp_companies,id',
+                'is_active' => 'boolean'
+            ]);
 
-        $validated = $request->validate([
-            'name' => 'required|string',
-            'password' => 'nullable|sometimes|string',
-            'is_active' => 'nullable|boolean',
-        ]);
+            $updated = $this->itemRepository->update($id, $validated);
 
-        $updated = $this->itemRepository->update($id, $validated);
+            if (!$updated) {
+                return response()->json(['error' => 'Error updating manager'], 500);
+            }
 
-        if (!$updated) {
+            return response()->json(['message' => 'Manager updated']);
+        } catch (\Exception $e) {
             return response()->json(['error' => 'Error updating manager'], 500);
         }
-
-        return response()->json(['message' => 'Manager updated']);
     }
 
-    public function delete($company_id, $id)
+    public function destroy($id)
     {
-        $deleted = $this->itemRepository->delete($id);
-        if (!$deleted) {
-            return response()->json(['error' => 'Manager not found'], 404);
+        try {
+            $deleted = $this->itemRepository->delete($id);
+
+            if (!$deleted) {
+                return response()->json(['error' => 'Error deleting manager'], 500);
+            }
+
+            return response()->json(['message' => 'Manager deleted']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error deleting manager'], 500);
         }
-        return response()->json(['message' => 'Manager deleted']);
     }
 }

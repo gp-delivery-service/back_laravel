@@ -212,6 +212,7 @@ class ManagerPickupController extends Controller
         }
 
         NodeService::callServiceRefresh();
+        NodeService::callVisibilityUpdate();
 
         return response()->json(['message' => 'Pickup updated']);
     }
