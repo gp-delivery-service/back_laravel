@@ -38,7 +38,7 @@ class ManagerPickupRepository
             ->when($company_id !== null, function ($query) use ($company_id) {
                 $query->where('gp_pickups.company_id', $company_id);
             })
-            ->where('gp_pickups.archived', false);
+            ->where('gp_pickups.archive', false);
 
         // Применяем фильтры
         if (!empty($filters['status'])) {
@@ -72,13 +72,13 @@ class ManagerPickupRepository
             $query->where('gp_pickups.company_id', $filters['company_id']);
         }
 
-        // Фильтр по дате создания
+        // Фильтр по дате создания - простое сравнение строк
         if (!empty($filters['date_from'])) {
-            $query->where('gp_pickups.created_at', '>=', $filters['date_from'] . ' 00:00:00');
+            $query->whereRaw('DATE(gp_pickups.created_at) >= ?', [$filters['date_from']]);
         }
 
         if (!empty($filters['date_to'])) {
-            $query->where('gp_pickups.created_at', '<=', $filters['date_to'] . ' 23:59:59');
+            $query->whereRaw('DATE(gp_pickups.created_at) <= ?', [$filters['date_to']]);
         }
 
         $paginator = $query->orderBy('created_at', 'desc')->paginate($perPage);
@@ -257,7 +257,7 @@ class ManagerPickupRepository
             'pickup_id' => $pickupId,
             'driver_id' => $driverId,
             'company_id' => $pickup->company_id,
-            'status' => $pickup->status->value
+            'status' => $pickup->status
         ]);
 
         return true;
@@ -327,6 +327,40 @@ class ManagerPickupRepository
         return $pickup->refresh();
     }
 
+    public function cancelDriverAssignment(int $id): bool
+    {
+        $pickup = GpPickup::findOrFail($id);
+
+        // Логируем информацию для отладки
+        $currentStatus = is_object($pickup->status) ? $pickup->status->value : $pickup->status;
+        logger()->info('Отмена назначения водителя', [
+            'pickup_id' => $id,
+            'current_status' => $currentStatus,
+            'expected_status' => GpPickupStatus::DRIVER_FOUND->value,
+            'driver_id' => $pickup->driver_id
+        ]);
+
+        // Проверяем, что статус вызова driver_found
+        $currentStatus = is_object($pickup->status) ? $pickup->status->value : $pickup->status;
+        if ($currentStatus !== GpPickupStatus::DRIVER_FOUND->value) {
+            throw new \Exception('Можно отменить назначение водителя только для вызовов со статусом "Водитель назначен". Текущий статус: ' . $currentStatus);
+        }
+
+        // Обновляем статус на preparing и убираем водителя
+        $pickup->update([
+            'status' => GpPickupStatus::PREPARING->value,
+            'driver_id' => null,
+        ]);
+
+        logger()->info('Назначение водителя успешно отменено', [
+            'pickup_id' => $id,
+            'new_status' => $pickup->status,
+            'driver_id' => $pickup->driver_id
+        ]);
+
+        return true;
+    }
+
     private function getItems(array $ids = [])
     {
         $query = GpPickup::query();
@@ -341,6 +375,7 @@ class ManagerPickupRepository
             'gp_pickups.preparing_time as preparing_time',
             'gp_pickups.closed_time as closed_time',
             'gp_pickups.search_started_at as search_started_at',
+            'gp_pickups.created_at as created_at',
             //
             'gp_pickups.company_id as company_id',
             'gp_companies.name as company_name',
@@ -364,8 +399,10 @@ class ManagerPickupRepository
         $all_orders = $this->getPickupOrdersByIds($ids)->toArray();
         $driverFee = GpSettings::driverFee();
         $items->map(function ($item) use ($all_orders, $driverFee) {
-            $item->driver_fee = $driverFee;
-            $item->orders = $all_orders[$item->id] ?? null;
+            if (is_object($item)) {
+                $item->driver_fee = $driverFee;
+                $item->orders = $all_orders[$item->id] ?? null;
+            }
             return $item;
         });
 

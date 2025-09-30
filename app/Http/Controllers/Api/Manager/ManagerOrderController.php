@@ -226,6 +226,7 @@ class ManagerOrderController extends Controller
 
         // Дополнительно: вызвать обновление ноды
         NodeService::callServiceRefresh();
+        NodeService::callPickupsRefresh();
         NodeService::callVisibilityUpdate();
 
         return response()->json([

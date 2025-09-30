@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Controllers\Api\Admin\AdminArchiveController;
 use App\Http\Controllers\Api\Admin\AdminBalanceLogController;
 use App\Http\Controllers\Api\Admin\AdminEntityLogController;
 use App\Http\Controllers\Api\Admin\AdminFundLogController;
 use App\Http\Controllers\Api\Admin\AdminOperatorsController;
 use App\Http\Controllers\Api\Admin\AdminUserController;
+use App\Http\Controllers\Api\Admin\NewCompanyRequestController;
 use App\Http\Controllers\Api\App\AppController;
 use App\Http\Controllers\Api\Dashboard\CompanyController;
 use App\Http\Controllers\Api\Driver\DriverPickupController;
@@ -49,6 +51,9 @@ use Illuminate\Support\Facades\Route;
 // APP
 Route::get('/app', [AppController::class, 'index']);
 
+// PUBLIC - NEW COMPANY REQUESTS
+Route::post('/public/company-requests', [NewCompanyRequestController::class, 'store']);
+
 // ADMIN
 // - AUTH
 Route::post('/owner/auth/login', [AdminUserController::class, 'login']);
@@ -83,9 +88,16 @@ Route::middleware(['auth:api_admin', 'role:admin'])->get('/owner/fund/earnings-c
 Route::middleware(['auth:api_admin', 'role:admin'])->get('/owner/orders-by-companies-chart', [AdminFundLogController::class, 'getOrdersByCompaniesChart']);
 
 // - BALANCE LOGS
-Route::middleware(['multi_role:operator,admin'])->get('/owner/balance-logs', [AdminBalanceLogController::class, 'index']);
+Route::middleware(['multi_role:operator,admin,manager'])->get('/owner/balance-logs', [AdminBalanceLogController::class, 'index']);
 // - ENTITY LOGS
-Route::middleware(['multi_role:operator,admin'])->get('/owner/entity-logs', [AdminEntityLogController::class, 'index']);
+Route::middleware(['multi_role:operator,admin,manager'])->get('/owner/entity-logs', [AdminEntityLogController::class, 'index']);
+// - ARCHIVE
+Route::middleware(['auth:api_admin', 'role:admin'])->post('/owner/archive/order', [AdminArchiveController::class, 'archiveOrder']);
+Route::middleware(['auth:api_admin', 'role:admin'])->post('/owner/archive/pickup', [AdminArchiveController::class, 'archivePickup']);
+// - NEW COMPANY REQUESTS
+Route::middleware(['multi_role:operator,admin'])->get('/owner/company-requests', [NewCompanyRequestController::class, 'index']);
+Route::middleware(['multi_role:operator,admin'])->get('/owner/company-requests/{id}', [NewCompanyRequestController::class, 'show']);
+Route::middleware(['multi_role:operator,admin'])->delete('/owner/company-requests/{id}', [NewCompanyRequestController::class, 'destroy']);
 
 // OPERATOR
 // - AUTH
@@ -109,6 +121,7 @@ Route::middleware(['multi_role:operator,admin'])->delete('/operator/companies/{i
 Route::middleware(['multi_role:operator,admin'])->get('/operator/company-balance/info/{company_id}', [OperatorCompanyBalanceController::class, 'getInfo']);
 Route::middleware(['multi_role:operator,admin'])->post('/operator/company-balance/credit-balance-increase', [OperatorCompanyBalanceController::class, 'creditIncrease']);
 Route::middleware(['multi_role:operator,admin'])->post('/operator/company-balance/balance-increase', [OperatorCompanyBalanceController::class, 'balanceIncrease']);
+Route::middleware(['multi_role:operator,admin'])->post('/operator/company-balance/aggregator-debt-decrease', [OperatorCompanyBalanceController::class, 'aggregatorDebtDecrease']);
 // - CLIENTS
 Route::middleware(['multi_role:operator,admin'])->get('/operator/clients', [OperatorClientsController::class, 'index']);
 Route::middleware(['multi_role:operator,admin'])->get('/operator/clients/{id}', [OperatorClientsController::class, 'getInfo']);
@@ -197,6 +210,7 @@ Route::middleware(['multi_role:operator,admin,manager'])->put('/manager/pickups/
 Route::middleware(['multi_role:operator,admin,manager'])->post('/manager/pickups/{id}/add-orders', [ManagerPickupController::class, 'addOrders']);
 Route::middleware(['multi_role:operator,admin,manager'])->post('/manager/pickups/{id}/remove-orders', [ManagerPickupController::class, 'removeOrders']);
 Route::middleware(['multi_role:operator,admin,manager'])->post('/manager/pickups/{id}/status', [ManagerPickupController::class, 'changeStatus']);
+Route::middleware(['multi_role:admin'])->post('/manager/pickups/{id}/cancel-driver-assignment', [ManagerPickupController::class, 'cancelDriverAssignment']);
 // - COMPANIES
 Route::middleware(['multi_role:admin,operator,manager'])->get('/manager/companies', [ManagerCompanyController::class, 'index']);
 Route::middleware(['multi_role:admin,operator,manager'])->get('/manager/companies/{id}', [ManagerCompanyController::class, 'show']);

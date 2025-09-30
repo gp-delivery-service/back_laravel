@@ -27,6 +27,7 @@ class DriverPickupRepository
     {
         $query = GpPickup::query();
         $query->where('driver_id', null);
+        $query->where('archive', false);
         $query->whereIn('status', GpPickupStatus::openForDrivers());
         $pickupIds = $query->pluck('id')->toArray();
         $pickupRepository = new ManagerPickupRepository();
@@ -38,6 +39,7 @@ class DriverPickupRepository
     {
         $query = GpPickup::query();
         $query->where('driver_id', $driverId);
+        $query->where('archive', false);
         $query->whereIn('status', GpPickupStatus::activeStatuses());
         $pickupIds = $query->pluck('id')->toArray();
         $pickupRepository = new ManagerPickupRepository();
@@ -49,6 +51,7 @@ class DriverPickupRepository
     {
         $query = GpPickup::query();
         $query->where('driver_id', $driverId);
+        $query->where('archive', false);
         $query->whereIn('status', array(GpPickupStatus::CLOSED));
         // $query->orderBy('updated_at', 'desc');
         $pickupIds = $query->pluck('id')->toArray();

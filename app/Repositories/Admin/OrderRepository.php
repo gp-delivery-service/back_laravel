@@ -16,6 +16,7 @@ class OrderRepository
             ->when($company_id !== null, function ($query) use ($company_id) {
                 $query->where('gp_orders.company_id', $company_id);
             })
+            ->where('gp_orders.archive', false)
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
         $items_ids = $paginator->pluck('id')->toArray();
@@ -37,6 +38,7 @@ class OrderRepository
         })->when($company_id !== null, function ($query) use ($company_id) {
             $query->where('gp_orders.company_id', $company_id);
         })
+            ->where('gp_orders.archive', false)
             ->orderBy('created_at', 'desc')
             ->pluck('id')
             ->toArray();

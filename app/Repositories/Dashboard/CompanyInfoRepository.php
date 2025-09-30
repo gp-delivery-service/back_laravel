@@ -11,6 +11,9 @@ class CompanyInfoRepository {
         $company = GpCompany::select(
             'gp_companies.id as id',
             'gp_companies.name as name',
+            'gp_companies.balance as balance',
+            'gp_companies.credit_balance as credit_balance',
+            'gp_companies.agregator_side_balance as agregator_side_balance',
         )
         ->where('id', $companyId)
         ->first();

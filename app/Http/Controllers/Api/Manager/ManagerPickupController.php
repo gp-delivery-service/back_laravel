@@ -94,6 +94,10 @@ class ManagerPickupController extends Controller
                 'message' => 'An error occurred while creating the pickup.',
             ], 500);
         }
+
+        NodeService::callPickupsRefresh();
+        NodeService::callVisibilityUpdate();
+
         return response()->json(['message' => 'Pickup created']);
     }
 
@@ -133,6 +137,9 @@ class ManagerPickupController extends Controller
             ], 500);
         }
 
+        NodeService::callPickupsRefresh();
+        NodeService::callVisibilityUpdate();
+
         return response()->json(['message' => 'Pickup created']);
     }
 
@@ -165,6 +172,9 @@ class ManagerPickupController extends Controller
             ], 500);
         }
 
+        NodeService::callPickupsRefresh();
+        NodeService::callVisibilityUpdate();
+
         return response()->json(['message' => 'Pickup updated']);
     }
 
@@ -176,7 +186,12 @@ class ManagerPickupController extends Controller
         ]);
 
         try {
-            return $this->repository->addOrders($id, $data['order_ids']);
+            $result = $this->repository->addOrders($id, $data['order_ids']);
+            
+            NodeService::callPickupsRefresh();
+            NodeService::callVisibilityUpdate();
+            
+            return $result;
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'An error occurred while adding orders.',
@@ -192,7 +207,12 @@ class ManagerPickupController extends Controller
             'order_ids.*' => 'integer|exists:gp_orders,id',
         ]);
 
-        return $this->repository->removeOrders($id, $data['order_ids']);
+        $result = $this->repository->removeOrders($id, $data['order_ids']);
+        
+        NodeService::callPickupsRefresh();
+        NodeService::callVisibilityUpdate();
+        
+        return $result;
     }
 
     public function changeStatus(Request $request, int $id)
@@ -211,10 +231,26 @@ class ManagerPickupController extends Controller
             ], 500);
         }
 
+        NodeService::callPickupsRefresh();
         NodeService::callServiceRefresh();
         NodeService::callVisibilityUpdate();
 
         return response()->json(['message' => 'Pickup updated']);
+    }
+
+    public function cancelDriverAssignment(int $id)
+    {
+        $result = $this->repository->cancelDriverAssignment($id);
+
+        if (!$result) {
+            return response()->json([
+                'message' => 'An error occurred while canceling driver assignment.',
+            ], 500);
+        }
+
+        NodeService::callPickupsRefresh();
+        NodeService::callServiceRefresh();
+        return response()->json(['message' => 'Driver assignment canceled']);
     }
 
 

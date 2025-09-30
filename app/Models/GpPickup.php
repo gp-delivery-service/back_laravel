@@ -21,7 +21,7 @@ class GpPickup extends Model
         'system_note',
         'preparing_time',
         'closed_time',
-        'archived',
+        'archive',
         'search_started_at',
         'picked_up_at',
         'closed_at',

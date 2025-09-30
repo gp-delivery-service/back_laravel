@@ -98,6 +98,38 @@ class OperatorCompanyBalanceController extends Controller
         }
     }
 
+    public function aggregatorDebtDecrease(Request $request)
+    {
+        $validated = $request->validate([
+            'company_id' => 'required|string|exists:gp_companies,id',
+            'amount' => 'required|numeric|min:0',
+        ]);
+
+        try {
+            $user = Auth::user();
+            $guard = Auth::getDefaultDriver();
+            $role = $this->guardToRole[$guard] ?? 'unknown';
+
+            $this->repository->aggregator_debt_decrease_cash($validated['company_id'], $validated['amount']);
+            $operatorTransactionRepository = new OperatorTransactionsRepository(new OperatorBalanceRepository());
+            if ($role === 'operator') {
+                $operatorTransactionRepository->cash_decrease($user->id, $validated['amount']);
+            }
+
+            return response()->json([
+                'message' => 'Aggregator debt decreased successfully',
+            ]);
+        } catch (\RuntimeException $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'An error occurred while decreasing aggregator debt',
+            ], 500);
+        }
+    }
+
     public function show($id)
     {
         // Logic to retrieve and return specific company balance information by ID
