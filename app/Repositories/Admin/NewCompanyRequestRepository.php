@@ -8,11 +8,20 @@ use Illuminate\Support\Facades\DB;
 class NewCompanyRequestRepository
 {
     // Получение с пагинацией
-    public function getItemsWithPagination($perPage = 20)
+    public function getItemsWithPagination($perPage = 20, $status = null)
     {
-        $paginator = NewCompanyRequest::select('new_company_requests.id as id')
-            ->orderBy('created_at', 'desc')
-            ->paginate($perPage);
+        $query = NewCompanyRequest::select('new_company_requests.id as id');
+
+        // Добавляем фильтр по статусу
+        if ($status && in_array($status, [
+            NewCompanyRequest::STATUS_PENDING,
+            NewCompanyRequest::STATUS_ACCEPTED,
+            NewCompanyRequest::STATUS_CANCELED
+        ])) {
+            $query->where('new_company_requests.status', $status);
+        }
+
+        $paginator = $query->orderBy('created_at', 'desc')->paginate($perPage);
         $items_ids = $paginator->pluck('id')->toArray();
         $items = $this->getItems($items_ids);
         $ordered_items = $items->sortBy(function ($item) use ($items_ids) {

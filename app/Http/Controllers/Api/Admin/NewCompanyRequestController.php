@@ -63,7 +63,12 @@ class NewCompanyRequestController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $items = $this->itemRepository->getItemsWithPagination(20);
+        // $items = $this->itemRepository->getItemsWithPagination(20);
+
+        $status = $request->query('status');
+
+        $items = $this->itemRepository->getItemsWithPagination(20, $status);
+
 
         return response()->json([
             'items' => $items->items(),
