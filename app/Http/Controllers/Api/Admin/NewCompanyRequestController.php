@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\NewCompanyRequest;
 use App\Repositories\Admin\NewCompanyRequestRepository;
+use App\Services\NodeService;  // Добавить импорт
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -38,7 +39,14 @@ class NewCompanyRequestController extends Controller
             $data = $request->only(['company_name', 'phone']);
             $data['status'] = NewCompanyRequest::STATUS_PENDING;
             $item = $this->itemRepository->create($data);
-            // NodeService
+
+             // Отправляем уведомление всем админам через NodeService
+            NodeService::notifyNewCompanyRequest([
+                'id' => $item->id,
+                'company_name' => $item->company_name,
+                'phone' => $item->phone,
+            ]);
+
             return response()->json([
                 'message' => 'Заявка успешно отправлена',
                 'data' => $item
@@ -153,7 +161,6 @@ class NewCompanyRequestController extends Controller
     // API для получения количества pending заявок
     public function getPendingCount()
     {
-        Log::info('getPendingCount');
         $user = Auth::guard('api_admin')->user();
         if (!$user) {
             $user = Auth::guard('api_operator')->user();
