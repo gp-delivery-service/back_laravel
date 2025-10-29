@@ -37,7 +37,7 @@ class NewCompanyRequestRepository
             return null;
         }
         $item = $this->getItems([$item->id])->first();
-        
+
         if (!$item) {
             return null;
         }
@@ -67,6 +67,22 @@ class NewCompanyRequestRepository
         return $item->delete();
     }
 
+    // Обновление статуса
+    public function updateStatus($id, $status)
+    {
+        $item = NewCompanyRequest::find($id);
+        if (!$item) {
+            return false;
+        }
+        $item->status = $status;
+        return $item->save();
+    }
+    // Получение количества заявок со статусом pending
+    public function getPendingCount()
+    {
+        return NewCompanyRequest::where('status', NewCompanyRequest::STATUS_PENDING)->count();
+    }
+
     private function getItems(array $ids = [])
     {
         $query = NewCompanyRequest::query();
@@ -75,6 +91,7 @@ class NewCompanyRequestRepository
             'new_company_requests.id as id',
             'new_company_requests.company_name as company_name',
             'new_company_requests.phone as phone',
+            'new_company_requests.status as status',
             'new_company_requests.created_at as created_at',
             'new_company_requests.updated_at as updated_at',
         );

@@ -96,8 +96,10 @@ Route::middleware(['auth:api_admin', 'role:admin'])->post('/owner/archive/order'
 Route::middleware(['auth:api_admin', 'role:admin'])->post('/owner/archive/pickup', [AdminArchiveController::class, 'archivePickup']);
 // - NEW COMPANY REQUESTS
 Route::middleware(['multi_role:operator,admin'])->get('/owner/company-requests', [NewCompanyRequestController::class, 'index']);
+Route::middleware(['multi_role:operator,admin'])->get('/owner/company-requests/pending-count', [NewCompanyRequestController::class, 'getPendingCount']);
 Route::middleware(['multi_role:operator,admin'])->get('/owner/company-requests/{id}', [NewCompanyRequestController::class, 'show']);
 Route::middleware(['multi_role:operator,admin'])->delete('/owner/company-requests/{id}', [NewCompanyRequestController::class, 'destroy']);
+Route::middleware(['multi_role:operator,admin'])->put('/owner/company-requests/{id}/status', [NewCompanyRequestController::class, 'updateStatus']);
 
 // OPERATOR
 // - AUTH

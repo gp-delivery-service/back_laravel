@@ -9,6 +9,7 @@ use App\Repositories\Manager\ManagerPickupRepository;
 use App\Services\NodeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class ManagerPickupController extends Controller
@@ -187,10 +188,10 @@ class ManagerPickupController extends Controller
 
         try {
             $result = $this->repository->addOrders($id, $data['order_ids']);
-            
+
             NodeService::callPickupsRefresh();
             NodeService::callVisibilityUpdate();
-            
+
             return $result;
         } catch (\Exception $e) {
             return response()->json([
@@ -208,10 +209,10 @@ class ManagerPickupController extends Controller
         ]);
 
         $result = $this->repository->removeOrders($id, $data['order_ids']);
-        
+
         NodeService::callPickupsRefresh();
         NodeService::callVisibilityUpdate();
-        
+
         return $result;
     }
 

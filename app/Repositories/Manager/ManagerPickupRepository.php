@@ -11,6 +11,7 @@ use App\Constants\GpPickupStatus;
 use App\Models\GpSettings;
 use Illuminate\Validation\ValidationException;
 use App\Models\GpCompanyManager;
+use Illuminate\Support\Facades\Log;
 
 class ManagerPickupRepository
 {
@@ -296,21 +297,32 @@ class ManagerPickupRepository
             GpPickupStatus::REQUESTED->value,
         ];
 
-        if (!in_array($pickup->status, $allowedStatuses)) {
+
+        if (!in_array($pickup->status->value, $allowedStatuses)) {
             throw new \Exception('Нельзя удалять заказы из вызова в текущем статусе');
         }
 
-        // Удаляем заказы
-        GpPickupOrder::where('pickup_id', $pickupId)
-            ->whereIn('order_id', $orderIds)
-            ->whereIn('status', GpPickupOrderStatus::canBeRemovedFromPickup())
-            ->delete();
+        // Проверяем количество заказов ДО удаления
+        $ordersBeforeDeletion = GpPickupOrder::where('pickup_id', $pickupId)
+        ->whereIn('status', GpPickupOrderStatus::canBeRemovedFromPickup())
+        ->count();
 
-        // Проверяем, остались ли заказы в вызове
-        $remainingOrders = GpPickupOrder::where('pickup_id', $pickupId)->count();
-        if ($remainingOrders === 0) {
-            throw new \Exception('Нельзя удалить все заказы из вызова. Вызов должен содержать хотя бы один заказ.');
-        }
+        // Удаляем только те заказы, которые можно удалить
+        $deletedCount = GpPickupOrder::where('pickup_id', $pickupId)
+        ->whereIn('order_id', $orderIds)
+        ->whereIn('status', GpPickupOrderStatus::canBeRemovedFromPickup())
+        ->delete();
+
+        // Если пытались удалить все доступные заказы, и их не осталось - ошибка
+        // if ($deletedCount > 0 && ($ordersBeforeDeletion - $deletedCount) === 0) {
+        //     throw new \Exception('Нельзя удалить все заказы из вызова. Вызов должен содержать хотя бы один заказ.');
+        // }
+
+        // // Проверяем, остались ли заказы в вызове
+        // $remainingOrders = GpPickupOrder::where('pickup_id', $pickupId)->count();
+        // if ($remainingOrders === 0) {
+        //     throw new \Exception('Нельзя удалить все заказы из вызова. Вызов должен содержать хотя бы один заказ.');
+        // }
 
         return $pickup->refresh();
     }

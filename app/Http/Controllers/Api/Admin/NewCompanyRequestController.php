@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\NewCompanyRequest;
 use App\Repositories\Admin\NewCompanyRequestRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class NewCompanyRequestController extends Controller
@@ -34,8 +36,9 @@ class NewCompanyRequestController extends Controller
 
         try {
             $data = $request->only(['company_name', 'phone']);
+            $data['status'] = NewCompanyRequest::STATUS_PENDING;
             $item = $this->itemRepository->create($data);
-
+            // NodeService
             return response()->json([
                 'message' => 'Заявка успешно отправлена',
                 'data' => $item
@@ -90,6 +93,82 @@ class NewCompanyRequestController extends Controller
         }
 
         return response()->json($item);
+    }
+
+    // API для администраторов и операторов - обновление статуса заявки
+    public function updateStatus(Request $request, $id)
+    {
+        $user = Auth::guard('api_admin')->user();
+        if (!$user) {
+            $user = Auth::guard('api_operator')->user();
+        }
+
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'status' => 'required|in:pending,accepted,canceled',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'error' => 'Validation failed',
+                'messages' => $validator->errors()
+            ], 422);
+        }
+
+        $item = $this->itemRepository->getItemById($id);
+
+        if (!$item) {
+            return response()->json(['error' => 'Заявка не найдена'], 404);
+        }
+
+        try {
+            $updated = $this->itemRepository->updateStatus($id, $request->input('status'));
+
+            if ($updated) {
+                return response()->json([
+                    'message' => 'Статус заявки успешно обновлен',
+                    'data' => $this->itemRepository->getItemById($id)
+                ]);
+            } else {
+                return response()->json([
+                    'error' => 'Ошибка при обновлении статуса заявки'
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Ошибка при обновлении статуса заявки',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // API для получения количества pending заявок
+    public function getPendingCount()
+    {
+        Log::info('getPendingCount');
+        $user = Auth::guard('api_admin')->user();
+        if (!$user) {
+            $user = Auth::guard('api_operator')->user();
+        }
+
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        try {
+            $count = $this->itemRepository->getPendingCount();
+            return response()->json([
+                'count' => $count
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Ошибка при получении количества заявок',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     // API для администраторов и операторов - удаление заявки

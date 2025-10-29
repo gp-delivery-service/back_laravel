@@ -96,7 +96,7 @@ enum GpPickupStatus: string
 
     /**
      * Статусы, при которых вызов активный
-     * 
+     *
      * @return string[]
      */
     public static function activeStatuses(): array
@@ -112,7 +112,7 @@ enum GpPickupStatus: string
 
     /**
      * Статусы, при которых вызов закрыт
-     * 
+     *
      * @return string[]
      */
     public static function closedStatuses(): array
