@@ -141,6 +141,7 @@ class NewCompanyRequestController extends Controller
             $updated = $this->itemRepository->updateStatus($id, $request->input('status'));
 
             if ($updated) {
+                NodeService::notifyCompanyRequestsRefresh();
                 return response()->json([
                     'message' => 'Статус заявки успешно обновлен',
                     'data' => $this->itemRepository->getItemById($id)
@@ -186,6 +187,7 @@ class NewCompanyRequestController extends Controller
     // API для администраторов и операторов - удаление заявки
     public function destroy($id)
     {
+
         $user = Auth::guard('api_admin')->user();
         if (!$user) {
             $user = Auth::guard('api_operator')->user();
@@ -205,6 +207,7 @@ class NewCompanyRequestController extends Controller
             $deleted = $this->itemRepository->delete($id);
 
             if ($deleted) {
+                NodeService::notifyCompanyRequestsRefresh();
                 return response()->json([
                     'message' => 'Заявка успешно удалена'
                 ]);

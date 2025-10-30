@@ -51,6 +51,13 @@ class NodeService
         );
     }
 
+    // Новый метод: оповестить о том, что список/счетчик заявок изменился
+    public static function notifyCompanyRequestsRefresh(): array
+    {
+        $url = rtrim(config('services.node.http_url'), '/') . '/company-request/refresh';
+        return self::sendRequestWithRetry($url, array(), 'post');
+    }
+
     public static function callShowVerificationCode(int $id, string $operator_id): array
     {
         $url = rtrim(config('services.node.http_url'), '/') . '/call/show_verification_code/' . $operator_id . '/' . $id;
