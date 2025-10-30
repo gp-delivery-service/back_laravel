@@ -90,7 +90,7 @@ class ManagerOrderController extends Controller
                 'mesage' => "Компания не указана"
             ], 403);
         }
-        
+
         $item = $this->itemRepository->getItemById($id);
 
         return response()->json($item);
@@ -201,7 +201,7 @@ class ManagerOrderController extends Controller
 
         if (!$order) {
             return response()->json(['error' => 'Ошибка при создании заказа'], 500);
-        } 
+        }
 
         // ✅ Создание пикапа
         $pickupData = [

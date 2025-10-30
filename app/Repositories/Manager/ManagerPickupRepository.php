@@ -291,14 +291,16 @@ class ManagerPickupRepository
         // Получаем вызов для проверки его статуса
         $pickup = GpPickup::findOrFail($pickupId);
 
-        // Проверяем, что вызов находится в статусе, когда можно удалять заказы
+        // Нормализуем статус к строке
+        $currentStatus = is_object($pickup->status) ? $pickup->status->value : $pickup->status;
+
+        // Разрешаем удаление только в 'preparing' (добавьте другие нужные, но не 'requested')
         $allowedStatuses = [
             GpPickupStatus::PREPARING->value,
-            GpPickupStatus::REQUESTED->value,
+            // GpPickupStatus::REQUESTED->value,
         ];
 
-
-        if (!in_array($pickup->status->value, $allowedStatuses)) {
+        if (!in_array($currentStatus, $allowedStatuses, true)) {
             throw new \Exception('Нельзя удалять заказы из вызова в текущем статусе');
         }
 
