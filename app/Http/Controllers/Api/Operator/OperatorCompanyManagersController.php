@@ -74,16 +74,15 @@ class OperatorCompanyManagersController extends Controller
         }
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, $company_id, $id)
     {
         try {
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
-                'email' => 'required|email|unique:gp_company_managers,email,' . $id,
-                'company_id' => 'required|exists:gp_companies,id',
+                'email' => 'required|email|unique:gp_company_managers,email,' . $id . ',id',
+                'password' => 'nullable|string', // Добавить password как опциональное поле
                 'is_active' => 'boolean'
             ]);
-
             $updated = $this->itemRepository->update($id, $validated);
 
             if (!$updated) {
@@ -91,8 +90,12 @@ class OperatorCompanyManagersController extends Controller
             }
 
             return response()->json(['message' => 'Manager updated']);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['error' => $e->getMessage(), 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Error updating manager'], 500);
+            Log::error('Error updating manager: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            return response()->json(['error' => 'Error updating manager: ' . $e->getMessage()], 500);
         }
     }
 

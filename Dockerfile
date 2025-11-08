@@ -17,10 +17,7 @@ COPY . .
 # Установка зависимостей Laravel
 RUN composer install --no-dev --optimize-autoloader
 
-# Генерация ключа, создание storage-ссылки и миграции
-RUN php artisan key:generate \
- && php artisan storage:link \
- && php artisan config:cache
+# Пропускаем artisan-команды на этапе сборки; они будут выполняться при запуске контейнера
 
 # Разрешения
 RUN chown -R www-data:www-data /var/www && chmod -R 755 /var/www

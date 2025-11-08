@@ -55,6 +55,9 @@ class CompanyManagerRepository
         }
 
         $item = GpCompanyManager::find($id);
+        if (!$item) {
+            return false; // Добавить проверку на null
+        }
         $updated = $item->update($data);
         return $updated;
     }
