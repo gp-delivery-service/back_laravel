@@ -92,11 +92,11 @@ class OperatorDriversController extends Controller
         // Проверка: нельзя отключить водителя с ненулевыми балансами
         if (isset($validated['is_active']) && $validated['is_active'] === false) {
             $driver = $this->itemRepository->getItemById($id);
-            
+
             if ($driver && (
                 $driver->cash_client != 0 ||
                 $driver->cash_service != 0 ||
-                $driver->cash_goods != 0 ||
+                // $driver->cash_goods != 0 ||
                 $driver->cash_company_balance != 0 ||
                 $driver->cash_wallet != 0
             )) {
