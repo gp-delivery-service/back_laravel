@@ -24,10 +24,10 @@ class AdminOperatorsController extends Controller
     {
         $user = Auth::guard('api_admin')->user();
 
-        // Получаем параметр статуса из запроса
         $status = $request->get('status');
+        $search = $request->get('search');
 
-        $items = $this->itemRepository->getItemsWithPagination($user->id, 20, $status);
+        $items = $this->itemRepository->getItemsWithPagination($user->id, 20, $status, $search);
 
         return response()->json([
             'items' => $items->items(),

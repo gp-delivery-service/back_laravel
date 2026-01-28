@@ -19,8 +19,9 @@ class OperatorClientsController extends Controller
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 20);
-        
-        $items = $this->itemRepository->getItemsWithPagination($perPage);
+        $search = $request->get('search');
+
+        $items = $this->itemRepository->getItemsWithPagination($perPage, $search);
 
         return response()->json([
             'items' => $items->items(),

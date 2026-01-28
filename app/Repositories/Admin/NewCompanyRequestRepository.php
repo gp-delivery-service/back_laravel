@@ -7,18 +7,25 @@ use Illuminate\Support\Facades\DB;
 
 class NewCompanyRequestRepository
 {
-    // Получение с пагинацией
-    public function getItemsWithPagination($perPage = 20, $status = null)
+    // Получение с пагинацией (поиск по названию компании и телефону)
+    public function getItemsWithPagination($perPage = 20, $status = null, $search = null)
     {
         $query = NewCompanyRequest::select('new_company_requests.id as id');
 
-        // Добавляем фильтр по статусу
         if ($status && in_array($status, [
             NewCompanyRequest::STATUS_PENDING,
             NewCompanyRequest::STATUS_ACCEPTED,
             NewCompanyRequest::STATUS_CANCELED
         ])) {
             $query->where('new_company_requests.status', $status);
+        }
+
+        if (!empty($search)) {
+            $term = '%' . $search . '%';
+            $query->where(function ($q) use ($term) {
+                $q->where('new_company_requests.company_name', 'like', $term)
+                    ->orWhere('new_company_requests.phone', 'like', $term);
+            });
         }
 
         $paginator = $query->orderBy('created_at', 'desc')->paginate($perPage);

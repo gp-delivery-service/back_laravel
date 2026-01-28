@@ -7,18 +7,23 @@ use Illuminate\Support\Facades\DB;
 
 class OperatorRepository
 {
-    // Получение с пагинацией
-    public function getItemsWithPagination($userUuid, $perPage = 20, $status = null)
+    // Получение с пагинацией (поиск по имени и email)
+    public function getItemsWithPagination($userUuid, $perPage = 20, $status = null, $search = null)
     {
         $query = GpOperator::select('gp_operators.id as id');
 
-        // Применяем фильтр по статусу
         if ($status === 'active') {
             $query->where('is_active', true);
         } elseif ($status === 'inactive') {
             $query->where('is_active', false);
         }
-        // Если $status === 'all' или null, то показываем всех
+
+        if (!empty($search)) {
+            $term = '%' . $search . '%';
+            $query->where(function ($q) use ($term) {
+                $q->where('name', 'like', $term)->orWhere('email', 'like', $term);
+            });
+        }
 
         $paginator = $query->orderBy('created_at', 'desc')->paginate($perPage);
         $items_ids = $paginator->pluck('id')->toArray();

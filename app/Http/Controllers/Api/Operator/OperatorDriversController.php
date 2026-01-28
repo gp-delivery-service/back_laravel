@@ -26,10 +26,10 @@ class OperatorDriversController extends Controller
 
         // Получаем параметр статуса из запроса
         $status = $request->get('status');
-
+        $search = $request->get('search');
         Log::info('Drivers API called with status: ' . $status);
 
-        $items = $this->itemRepository->getItemsWithPagination($user->id, 20, $status);
+        $items = $this->itemRepository->getItemsWithPagination($user->id, 20, $status, $search);
 
         Log::info('Drivers API returned ' . count($items->items()) . ' items');
 

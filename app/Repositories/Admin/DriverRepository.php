@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 class DriverRepository
 {
     // Получение с пагинацией
-    public function getItemsWithPagination($userUuid, $perPage = 20, $status = null)
+    public function getItemsWithPagination($userUuid, $perPage = 20, $status = null, $search = null)
     {
         $query = GpDriver::select('gp_drivers.id as id');
 
@@ -19,7 +19,13 @@ class DriverRepository
             $query->where('is_active', false);
         }
         // Если $status === 'all' или null, то показываем всех
-
+        if (!empty($search)) {
+            $term = '%' . trim($search) . '%';
+            $query->where(function ($q) use ($term) {
+                $q->where('gp_drivers.name', 'like', $term)
+                  ->orWhere('gp_drivers.phone', 'like', $term);
+            });
+        }
         $paginator = $query->orderBy('created_at', 'desc')->paginate($perPage);
         $items_ids = $paginator->pluck('id')->toArray();
         $items = $this->getItems($items_ids, $status);

@@ -7,12 +7,19 @@ use Illuminate\Support\Facades\DB;
 
 class CompanyRepository
 {
-    // Получение с пагинацией
-    public function getItemsWithPagination($userUuid, $perPage = 20)
+    // Получение с пагинацией (поиск по названию и адресу)
+    public function getItemsWithPagination($userUuid, $perPage = 20, $search = null)
     {
-        $paginator = GpCompany::select('gp_companies.id as id')
-            ->orderBy('created_at', 'desc')
-            ->paginate($perPage);
+        $query = GpCompany::select('gp_companies.id as id');
+
+        if (!empty($search)) {
+            $term = '%' . $search . '%';
+            $query->where(function ($q) use ($term) {
+                $q->where('name', 'like', $term)->orWhere('address', 'like', $term);
+            });
+        }
+
+        $paginator = $query->orderBy('created_at', 'desc')->paginate($perPage);
         $items_ids = $paginator->pluck('id')->toArray();
         $items = $this->getItems($items_ids);
         $ordered_items = $items->sortBy(function ($item) use ($items_ids) {

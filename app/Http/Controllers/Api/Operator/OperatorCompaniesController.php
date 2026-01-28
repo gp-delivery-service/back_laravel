@@ -19,11 +19,12 @@ class OperatorCompaniesController extends Controller
         $this->itemRepository = $itemRepository;
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
+        $search = $request->get('search');
 
-        $items = $this->itemRepository->getItemsWithPagination($user->id, 20);
+        $items = $this->itemRepository->getItemsWithPagination($user->id, 20, $search);
 
         return response()->json([
             'items' => $items->items(),

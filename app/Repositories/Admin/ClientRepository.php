@@ -7,11 +7,20 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class ClientRepository
 {
-    public function getItemsWithPagination($perPage = 20): LengthAwarePaginator
+    public function getItemsWithPagination($perPage = 20, $search = null): LengthAwarePaginator
     {
-        $paginator = GpClient::select('gp_clients.id as id')
-            ->orderBy('gp_clients.created_at', 'desc')
-            ->paginate($perPage);
+        $query = GpClient::select('gp_clients.id as id');
+
+        if (!empty($search)) {
+            $term = '%' . $search . '%';
+            $query->where(function ($q) use ($term) {
+                $q->where('gp_clients.name', 'like', $term)
+                    ->orWhere('gp_clients.phone', 'like', $term)
+                    ->orWhere('gp_clients.wallet', 'like', $term);
+            });
+        }
+
+        $paginator = $query->orderBy('gp_clients.created_at', 'desc')->paginate($perPage);
 
         $ids = $paginator->items();
         $ids = collect($ids)->pluck('id')->toArray();
