@@ -15,8 +15,6 @@ class GpSettings extends Model
 
     public static function driverFee(): int
     {
-        return (int) self::query()
-            ->where('key', 'driver_fee')
-            ->value('int_value') ?? 25;
+        return (int) (self::query()->where('key', 'driver_fee')->value('int_value') ?? 25);
     }
 }

@@ -414,7 +414,8 @@ class ManagerPickupRepository
         $driverFee = GpSettings::driverFee();
         $items->map(function ($item) use ($all_orders, $driverFee) {
             if (is_object($item)) {
-                $item->driver_fee = $driverFee;
+                // $item->driver_fee = $driverFee;
+                $item->driver_fee = $all_orders[$item->id][0]['delivery_price'] ?? null;
                 $item->orders = $all_orders[$item->id] ?? null;
             }
             return $item;
